@@ -1,22 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import itemService from '../services/itemService';
 import ItemForm from '../components/ItemForm';
+import mockItems from '../mock/mockItems';
 
 function ItemList() {
   const [items, setItems] = useState([]);
 
-  const fetchItems = async () => {
-    const data = await itemService.getItems();
-    setItems(data);
-  };
-
   useEffect(() => {
-    fetchItems();
+    
+    setItems(mockItems);
   }, []);
 
-  const handleAddItem = async (item) => {
-    await itemService.createItem(item);
-    fetchItems();
+  const handleAddItem = (item) => {
+    
+    setItems(prev => [
+      ...prev,
+      {
+        _id: (prev.length + 1).toString(),
+        name: item.name,
+        description: item.description,
+        createdAt: new Date().toISOString()
+      }
+    ]);
   };
 
   return (
