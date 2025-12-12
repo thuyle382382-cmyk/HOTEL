@@ -109,3 +109,37 @@ export const mockInvoices = [
     createdAt: "2025-01-18",
   },
 ];
+
+export const mockMaintenanceTickets = [
+  {
+    id: "MT001",
+    roomId: "R204",
+    title: "Điều hòa không hoạt động",
+    description: "Máy điều hòa không làm lạnh",
+    reportedBy: "Lễ tân",
+    assignedTo: "ST005",
+    priority: "high",
+    status: "in_progress",
+    createdAt: "2025-01-15",
+  },
+  {
+    id: "MT002",
+    roomId: "R103",
+    title: "Thay bóng đèn",
+    description: "Đèn phòng ngủ hỏng",
+    reportedBy: "Housekeeping",
+    assignedTo: "ST005",
+    priority: "low",
+    status: "completed",
+    createdAt: "2025-01-14",
+    completedAt: "2025-01-14",
+  },
+];
+
+export const mockStaff = [
+  { id: "ST001", name: "Nguyễn Văn Quản", role: "admin", email: "admin@hotel.com", phone: "0911111111", status: "active" },
+  { id: "ST002", name: "Trần Thị Mai", role: "manager", email: "manager@hotel.com", phone: "0922222222", status: "active" },
+  { id: "ST003", name: "Lê Văn Tân", role: "front_desk", email: "frontdesk@hotel.com", phone: "0933333333", status: "active" },
+  { id: "ST004", name: "Phạm Thị Lan", role: "housekeeping", email: "housekeeping@hotel.com", phone: "0944444444", status: "active" },
+  { id: "ST005", name: "Hoàng Văn Kỹ", role: "technician", email: "technician@hotel.com", phone: "0955555555", status: "active" },
+];
