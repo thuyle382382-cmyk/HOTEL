@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import Rooms from "./pages/Rooms";
 import Bookings from "./pages/Bookings";
 import Guests from "./pages/Guests";
+import Invoices from "./pages/Invoices";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/rooms" element={<Rooms />} />
         <Route path="/bookings" element={<Bookings />} />
         <Route path="/guests" element={<Guests />} />
+        <Route path="/invoices" element={<Invoices />} />
       </Routes>
     </AppLayout>
   );

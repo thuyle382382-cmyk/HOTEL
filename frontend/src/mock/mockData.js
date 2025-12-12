@@ -91,3 +91,21 @@ export const mockBookings = [
   },
 ];
 
+export const mockInvoices = [
+  {
+    id: "INV001",
+    bookingId: "B001",
+    guestId: "G001",
+    items: [
+      { description: "Phòng 102 (3 đêm)", quantity: 3, unitPrice: 500000, total: 1500000 },
+      { description: "Ăn sáng buffet", quantity: 6, unitPrice: 150000, total: 900000 },
+    ],
+    subtotal: 2400000,
+    tax: 240000,
+    discount: 0,
+    total: 2640000,
+    paymentStatus: "paid",
+    paymentMethod: "Thẻ tín dụng",
+    createdAt: "2025-01-18",
+  },
+];
