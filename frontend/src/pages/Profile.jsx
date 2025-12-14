@@ -11,7 +11,7 @@ export default function Profile() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   
-  // Mock user data
+  // Mock dữ liệu người dùng
   const [userInfo, setUserInfo] = useState({
     fullName: "Nguyễn Văn A",
     role: "Quản lý",
@@ -167,7 +167,7 @@ export default function Profile() {
         </Card>
       </div>
 
-      {/* Edit Profile Dialog */}
+      {/* PopUp chỉnh sửa thông tin */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -220,7 +220,7 @@ export default function Profile() {
         </DialogContent>
       </Dialog>
 
-      {/* Change Password Dialog */}
+      {/* PopUp đổi mật khẩu */}
       <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
         <DialogContent>
           <DialogHeader>
