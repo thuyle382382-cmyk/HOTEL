@@ -1,5 +1,5 @@
 @startuml
-!includeurl https://raw.githubusercontent.com/thuyle382382-cmyk/HOTEL/COMMIT_HASH/uml/usecase.puml
+!includeurl https://raw.githubusercontent.com/thuyle382382-cmyk/HOTEL/main/uml/usecase.puml
 @enduml
 
 /' 
