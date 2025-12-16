@@ -22,6 +22,7 @@ export const mockCustomerAccounts = [
     createdAt: "2025-01-08",
   },
 ];
+
 // Online Bookings (from customer portal)
 export const mockOnlineBookings = [
   {
@@ -53,6 +54,7 @@ export const mockOnlineBookings = [
     notes: "",
   },
 ];
+
 // Customer Service Requests
 export const mockServiceRequests = [
   {
