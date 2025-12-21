@@ -167,7 +167,7 @@ export default function Guests() {
         </Button>
       </div>
 
-      {/* Summary Cards */}
+      {/* Các thẻ */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
@@ -205,7 +205,7 @@ export default function Guests() {
         </Card>
       </div>
 
-      {/* Search */}
+      {/* Tìm kiếm */}
       <Card>
         <CardContent className="pt-6">
           <div className="relative">
@@ -220,7 +220,7 @@ export default function Guests() {
         </CardContent>
       </Card>
 
-      {/* Guests Table */}
+      {/* Bảng kh */}
       <Card>
         <CardHeader>
           <CardTitle>Danh sách khách hàng ({filteredGuests.length})</CardTitle>
@@ -278,7 +278,7 @@ export default function Guests() {
         </CardContent>
       </Card>
 
-      {/* Add Guest Dialog */}
+      {/* PopUp thêm kh */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -339,7 +339,7 @@ export default function Guests() {
         </DialogContent>
       </Dialog>
 
-      {/* View Detail Dialog */}
+      {/* PopUp chi tiết kh */}
       <Dialog open={isViewDetailOpen} onOpenChange={setIsViewDetailOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -383,7 +383,7 @@ export default function Guests() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Guest Dialog */}
+      {/* PopUp xóa kh */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -433,7 +433,7 @@ export default function Guests() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Guest Dialog */}
+      {/* PopUp xóa kh */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>

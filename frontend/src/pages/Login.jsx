@@ -163,6 +163,13 @@ export default function Login() {
           <div className="text-center text-sm text-muted-foreground">
             Liên hệ quản trị viên để tạo tài khoản
           </div>
+          <div className="border-t pt-4">
+            <a href="/customer/login">
+              <Button variant="outline" className="w-full">
+                Cổng khách hàng
+              </Button>
+            </a>
+          </div>
         </CardContent>
       </Card>
 

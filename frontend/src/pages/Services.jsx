@@ -197,7 +197,7 @@ export default function Services() {
         </CardContent>
       </Card>
 
-      {/* Add Service Dialog */}
+      {/* Popup thêm dv */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -240,7 +240,7 @@ export default function Services() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Service Dialog */}
+      {/* Popup cập nhật dv */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -282,7 +282,7 @@ export default function Services() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Service Dialog */}
+      {/* Popup xóa dv */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>

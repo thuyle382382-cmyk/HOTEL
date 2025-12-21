@@ -203,7 +203,7 @@ export default function Invoices() {
         </Button>
       </div>
 
-      {/* Summary Cards */}
+      {/* Các thẻ */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -255,7 +255,7 @@ export default function Invoices() {
         </Card>
       </div>
 
-      {/* Invoices Table */}
+      {/* Bảng hđ */}
       <Card>
         <CardHeader>
           <CardTitle>Danh sách hóa đơn</CardTitle>
@@ -315,7 +315,7 @@ export default function Invoices() {
         </CardContent>
       </Card>
 
-      {/* Create Invoice Dialog */}
+      {/* Popup tạo hđ */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -419,7 +419,7 @@ export default function Invoices() {
         </DialogContent>
       </Dialog>
 
-      {/* View Detail Dialog */}
+      {/* Popup chi tiết hđ */}
       <Dialog open={isViewDetailOpen} onOpenChange={setIsViewDetailOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -493,7 +493,7 @@ export default function Invoices() {
         </DialogContent>
       </Dialog>
 
-      {/* Print Dialog */}
+      {/* Popup in hđ */}
       <Dialog open={isPrintOpen} onOpenChange={setIsPrintOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
