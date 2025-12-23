@@ -6,6 +6,17 @@ export { default as bookingApi } from './bookingApi';
 export { default as serviceApi } from './serviceApi';
 export { default as invoiceApi } from './invoiceApi';
 export { default as itemApi } from './itemApi';
+export { default as positionApi } from './positionApi';
+export { default as staffApi } from './staffApi';
+export { default as accountApi } from './accountApi';
+export { default as paymentMethodApi } from './paymentMethodApi';
+export { default as rentalReceiptApi } from './rentalReceiptApi';
+export { default as maintenanceApi } from './maintenanceApi';
+export { default as serviceUsageApi } from './serviceUsageApi';
+export { default as bookingHistoryApi } from './bookingHistoryApi';
+export { default as serviceUsageHistoryApi } from './serviceUsageHistoryApi';
+export { default as datPhongApi } from './datPhongApi';
+export { default as roomTypeApi } from './roomTypeApi';
 
 // Export utility functions
 export {

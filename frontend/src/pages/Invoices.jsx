@@ -282,13 +282,13 @@ export default function Invoices() {
               <TableBody>
                 {invoices.map((invoice) => (
                   <TableRow key={invoice._id}>
-                    <TableCell className="font-medium">{invoice.MaHoaDon || invoice._id.substring(0, 8)}</TableCell>
-                    <TableCell>{invoice.MaPhieuThuePhong || "N/A"}</TableCell>
-                    <TableCell>{invoice.KhachHang || "N/A"}</TableCell>
+                    <TableCell className="font-medium">{invoice.MaHD || "N/A"}</TableCell>
+                    <TableCell>{invoice.PhieuThuePhong.MaPTP || "N/A"}</TableCell>
+                    <TableCell>{invoice.KhachHang.HoTen || "N/A"}</TableCell>
                     <TableCell>{invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('vi-VN') : "N/A"}</TableCell>
                     <TableCell className="font-medium">{calculateTotal(invoice).toLocaleString('vi-VN')} VNĐ</TableCell>
                     <TableCell>{getPaymentStatusBadge(invoice.TrangThaiThanhToan)}</TableCell>
-                    <TableCell>{invoice.PhuongThucThanhToan || "-"}</TableCell>
+                    <TableCell>{invoice.PhuongThucThanhToan.TenPTTT || "-"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button 
