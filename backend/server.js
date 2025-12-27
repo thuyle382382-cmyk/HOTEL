@@ -11,6 +11,17 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const itemRoutes = require('./routes/itemRoutes');
+const positionRoutes = require('./routes/positionRoutes');
+const staffRoutes = require('./routes/staffRoutes');
+const accountRoutes = require('./routes/accountRoutes');
+const paymentMethodRoutes = require('./routes/paymentMethodRoutes');
+const rentalReceiptRoutes = require('./routes/rentalReceiptRoutes');
+const maintenanceRoutes = require('./routes/maintenanceRoutes');
+const serviceUsageRoutes = require('./routes/serviceUsageRoutes');
+const bookingHistoryRoutes = require('./routes/bookingHistoryRoutes');
+const serviceUsageHistoryRoutes = require('./routes/serviceUsageHistoryRoutes');
+const datPhongRoutes = require('./routes/datPhongRoutes');
+const roomTypeRoutes = require('./routes/roomTypeRoutes');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -55,6 +66,17 @@ app.use('/api/bookings', authMiddleware, bookingRoutes);
 app.use('/api/services', authMiddleware, serviceRoutes);
 app.use('/api/invoices', authMiddleware, invoiceRoutes);
 app.use('/api/items', authMiddleware, itemRoutes);
+app.use('/api/positions', authMiddleware, positionRoutes);
+app.use('/api/staff', authMiddleware, staffRoutes);
+app.use('/api/accounts', authMiddleware, accountRoutes);
+app.use('/api/payment-methods', authMiddleware, paymentMethodRoutes);
+app.use('/api/rental-receipts', authMiddleware, rentalReceiptRoutes);
+app.use('/api/maintenance', authMiddleware, maintenanceRoutes);
+app.use('/api/service-usages', authMiddleware, serviceUsageRoutes);
+app.use('/api/booking-history', authMiddleware, bookingHistoryRoutes);
+app.use('/api/service-usage-history', authMiddleware, serviceUsageHistoryRoutes);
+app.use('/api/dat-phong', authMiddleware, datPhongRoutes);
+app.use('/api/room-types', authMiddleware, roomTypeRoutes);
 
 // Health route
 app.get('/api/health', (req, res) => res.json({ ok: true }));
