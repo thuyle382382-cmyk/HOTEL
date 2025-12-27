@@ -72,9 +72,9 @@ export default function Login() {
         result.VaiTro === "Receptionist" ||
         result.VaiTro === "MaintenanceStaff"
       ) {
-        navigate("/");
+        navigate("/dashboard", { replace: true });
       } else if (result.VaiTro === "Customer") {
-        navigate("/customer");
+        navigate("/customer", { replace: true });
       }
     } catch (error) {
       toast({

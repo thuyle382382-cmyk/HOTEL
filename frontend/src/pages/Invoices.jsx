@@ -28,9 +28,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Download, Eye, DollarSign, Loader2 } from "lucide-react";
-import { invoiceApi, bookingApi } from "@/api";
+import { invoiceApi, bookingApi, customerApi } from "@/api";
 
 export default function Invoices() {
+  useEffect(() => {
+    loadInvoices();
+    loadBookings();
+    loadCustomers();
+  }, []);
+
+  const loadCustomers = async () => {
+    try {
+      const data = await customerApi.getCustomers();
+      setCustomers(data);
+    } catch (err) {
+      console.error("Load customers error", err);
+    }
+  };
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isViewDetailOpen, setIsViewDetailOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
@@ -38,6 +52,7 @@ export default function Invoices() {
   const [invoices, setInvoices] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [customers, setCustomers] = useState([]);
   const [formData, setFormData] = useState({
     MaPhieuThuePhong: "",
     NhanVienThuNgan: "",
@@ -48,7 +63,7 @@ export default function Invoices() {
     PhuThu: 0,
     TienBoiThuong: 0,
     TienDaCoc: 0,
-    TrangThaiThanhToan: "Unpaid"
+    TrangThaiThanhToan: "Unpaid",
   });
 
   useEffect(() => {
@@ -98,7 +113,7 @@ export default function Invoices() {
         TongTienDichVu: parseFloat(formData.TongTienDichVu),
         PhuThu: parseFloat(formData.PhuThu),
         TienBoiThuong: parseFloat(formData.TienBoiThuong),
-        TienDaCoc: parseFloat(formData.TienDaCoc)
+        TienDaCoc: parseFloat(formData.TienDaCoc),
       });
       toast({
         title: "Thành công",
@@ -114,7 +129,7 @@ export default function Invoices() {
         PhuThu: 0,
         TienBoiThuong: 0,
         TienDaCoc: 0,
-        TrangThaiThanhToan: "Unpaid"
+        TrangThaiThanhToan: "Unpaid",
       });
       setIsCreateOpen(false);
       loadInvoices();
@@ -160,17 +175,28 @@ export default function Invoices() {
 
   const getPaymentStatusBadge = (status) => {
     const statusConfig = {
-      Unpaid: { label: "Chưa thanh toán", className: "bg-destructive text-destructive-foreground" },
-      Paid: { label: "Đã thanh toán", className: "bg-success text-success-foreground" },
-      PartiallyPaid: { label: "Thanh toán một phần", className: "bg-warning text-warning-foreground" },
-      Refunded: { label: "Đã hoàn tiền", className: "bg-secondary text-secondary-foreground" },
+      Unpaid: {
+        label: "Chưa thanh toán",
+        className: "bg-destructive text-destructive-foreground",
+      },
+      Paid: {
+        label: "Đã thanh toán",
+        className: "bg-success text-success-foreground",
+      },
+      PartiallyPaid: {
+        label: "Thanh toán một phần",
+        className: "bg-warning text-warning-foreground",
+      },
+      Refunded: {
+        label: "Đã hoàn tiền",
+        className: "bg-secondary text-secondary-foreground",
+      },
     };
-    const config = statusConfig[status] || { label: status, className: "bg-gray-500" };
-    return (
-      <Badge className={config.className}>
-        {config.label}
-      </Badge>
-    );
+    const config = statusConfig[status] || {
+      label: status,
+      className: "bg-gray-500",
+    };
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
   const calculateTotal = (invoice) => {
@@ -184,18 +210,26 @@ export default function Invoices() {
   };
 
   const totalRevenue = invoices
-    .filter(i => i.TrangThaiThanhToan === "Paid")
+    .filter((i) => i.TrangThaiThanhToan === "Paid")
     .reduce((sum, inv) => sum + calculateTotal(inv), 0);
   const unpaidAmount = invoices
-    .filter(i => i.TrangThaiThanhToan === "Unpaid" || i.TrangThaiThanhToan === "PartiallyPaid")
+    .filter(
+      (i) =>
+        i.TrangThaiThanhToan === "Unpaid" ||
+        i.TrangThaiThanhToan === "PartiallyPaid"
+    )
     .reduce((sum, inv) => sum + calculateTotal(inv), 0);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Quản lý hóa đơn</h1>
-          <p className="text-muted-foreground">Tạo và quản lý hóa đơn thanh toán</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            Quản lý hóa đơn
+          </h1>
+          <p className="text-muted-foreground">
+            Tạo và quản lý hóa đơn thanh toán
+          </p>
         </div>
         <Button className="gap-2" onClick={() => setIsCreateOpen(true)}>
           <Plus className="h-4 w-4" />
@@ -221,7 +255,7 @@ export default function Invoices() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {invoices.filter(i => i.TrangThaiThanhToan === "Paid").length}
+              {invoices.filter((i) => i.TrangThaiThanhToan === "Paid").length}
             </div>
             <p className="text-xs text-muted-foreground">
               {(totalRevenue / 1000000).toFixed(1)}M VNĐ
@@ -230,12 +264,20 @@ export default function Invoices() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Chưa thanh toán</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Chưa thanh toán
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {invoices.filter(i => i.TrangThaiThanhToan === "Unpaid" || i.TrangThaiThanhToan === "PartiallyPaid").length}
+              {
+                invoices.filter(
+                  (i) =>
+                    i.TrangThaiThanhToan === "Unpaid" ||
+                    i.TrangThaiThanhToan === "PartiallyPaid"
+                ).length
+              }
             </div>
             <p className="text-xs text-muted-foreground">
               {(unpaidAmount / 1000000).toFixed(1)}M VNĐ
@@ -249,7 +291,10 @@ export default function Invoices() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {invoices.filter(i => i.TrangThaiThanhToan === "Refunded").length}
+              {
+                invoices.filter((i) => i.TrangThaiThanhToan === "Refunded")
+                  .length
+              }
             </div>
           </CardContent>
         </Card>
@@ -282,25 +327,39 @@ export default function Invoices() {
               <TableBody>
                 {invoices.map((invoice) => (
                   <TableRow key={invoice._id}>
-                    <TableCell className="font-medium">{invoice.MaHD || "N/A"}</TableCell>
-                    <TableCell>{invoice.PhieuThuePhong.MaPTP || "N/A"}</TableCell>
-                    <TableCell>{invoice.KhachHang.HoTen || "N/A"}</TableCell>
-                    <TableCell>{invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('vi-VN') : "N/A"}</TableCell>
-                    <TableCell className="font-medium">{calculateTotal(invoice).toLocaleString('vi-VN')} VNĐ</TableCell>
-                    <TableCell>{getPaymentStatusBadge(invoice.TrangThaiThanhToan)}</TableCell>
-                    <TableCell>{invoice.PhuongThucThanhToan.TenPTTT || "-"}</TableCell>
+                    <TableCell>{invoice.MaHD}</TableCell>
+                    <TableCell>
+                      {invoice.PhieuThuePhong?.MaPTP || "N/A"}
+                    </TableCell>
+                    <TableCell>{invoice.KhachHang?.HoTen || "N/A"}</TableCell>
+                    <TableCell>
+                      {invoice.createdAt
+                        ? new Date(invoice.createdAt).toLocaleDateString(
+                            "vi-VN"
+                          )
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {invoice.TongThanhToan?.toLocaleString("vi-VN")} VNĐ
+                    </TableCell>
+                    <TableCell>
+                      {getPaymentStatusBadge(invoice.TrangThaiThanhToan)}
+                    </TableCell>
+                    <TableCell>
+                      {invoice.PhuongThucThanhToan?.TenPTTT || "N/A"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleViewDetail(invoice)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handlePrint(invoice)}
                         >
                           <Download className="h-4 w-4" />
@@ -317,77 +376,105 @@ export default function Invoices() {
 
       {/* Popup tạo hđ */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Tạo hóa đơn mới</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 overflow-y-auto max-h-[65vh] pr-2">
             <div className="grid gap-2">
               <Label htmlFor="bookingRef">Phiếu thuê phòng</Label>
-              <Input 
-                id="bookingRef" 
+              <Input
+                id="bookingRef"
                 placeholder="Ví dụ: DP001"
                 value={formData.MaPhieuThuePhong}
-                onChange={(e) => setFormData({...formData, MaPhieuThuePhong: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, MaPhieuThuePhong: e.target.value })
+                }
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="customer">Khách hàng</Label>
-              <Input 
-                id="customer" 
-                placeholder="Tên khách hàng"
+              <Select
                 value={formData.KhachHang}
-                onChange={(e) => setFormData({...formData, KhachHang: e.target.value})}
-              />
+                onValueChange={(v) =>
+                  setFormData({ ...formData, KhachHang: v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn khách hàng" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((c) => (
+                    <SelectItem key={c._id} value={c._id}>
+                      {c.HoTen}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="roomTotal">Tổng tiền phòng (VNĐ)</Label>
-              <Input 
-                id="roomTotal" 
+              <Input
+                id="roomTotal"
                 type="number"
                 value={formData.TongTienPhong}
-                onChange={(e) => setFormData({...formData, TongTienPhong: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, TongTienPhong: e.target.value })
+                }
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="serviceTotal">Tổng tiền dịch vụ (VNĐ)</Label>
-              <Input 
-                id="serviceTotal" 
+              <Input
+                id="serviceTotal"
                 type="number"
                 value={formData.TongTienDichVu}
-                onChange={(e) => setFormData({...formData, TongTienDichVu: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, TongTienDichVu: e.target.value })
+                }
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="surcharge">Phụ thu (VNĐ)</Label>
-              <Input 
-                id="surcharge" 
+              <Input
+                id="surcharge"
                 type="number"
                 value={formData.PhuThu}
-                onChange={(e) => setFormData({...formData, PhuThu: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, PhuThu: e.target.value })
+                }
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="compensation">Tiền bồi thường (VNĐ)</Label>
-              <Input 
-                id="compensation" 
+              <Input
+                id="compensation"
                 type="number"
                 value={formData.TienBoiThuong}
-                onChange={(e) => setFormData({...formData, TienBoiThuong: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, TienBoiThuong: e.target.value })
+                }
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="deposit">Tiền đã cọc (VNĐ)</Label>
-              <Input 
-                id="deposit" 
+              <Input
+                id="deposit"
                 type="number"
                 value={formData.TienDaCoc}
-                onChange={(e) => setFormData({...formData, TienDaCoc: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, TienDaCoc: e.target.value })
+                }
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="paymentMethod">Phương thức thanh toán</Label>
-              <Select value={formData.PhuongThucThanhToan} onValueChange={(value) => setFormData({...formData, PhuongThucThanhToan: value})}>
+              <Select
+                value={formData.PhuongThucThanhToan}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, PhuongThucThanhToan: value })
+                }
+              >
                 <SelectTrigger id="paymentMethod">
                   <SelectValue placeholder="Chọn phương thức" />
                 </SelectTrigger>
@@ -400,20 +487,29 @@ export default function Invoices() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="paymentStatus">Trạng thái thanh toán</Label>
-              <Select value={formData.TrangThaiThanhToan} onValueChange={(value) => setFormData({...formData, TrangThaiThanhToan: value})}>
+              <Select
+                value={formData.TrangThaiThanhToan}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, TrangThaiThanhToan: value })
+                }
+              >
                 <SelectTrigger id="paymentStatus">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Unpaid">Chưa thanh toán</SelectItem>
-                  <SelectItem value="PartiallyPaid">Thanh toán một phần</SelectItem>
+                  <SelectItem value="PartiallyPaid">
+                    Thanh toán một phần
+                  </SelectItem>
                   <SelectItem value="Paid">Đã thanh toán</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Hủy</Button>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              Hủy
+            </Button>
             <Button onClick={handleCreateInvoice}>Tạo hóa đơn</Button>
           </DialogFooter>
         </DialogContent>
@@ -430,59 +526,105 @@ export default function Invoices() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground">Mã hóa đơn</Label>
-                  <p className="text-lg font-semibold">{selectedInvoice.MaHoaDon || selectedInvoice._id.substring(0, 8)}</p>
+                  <p className="text-lg font-semibold">
+                    {selectedInvoice.MaHD}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Trạng thái</Label>
-                  <div className="mt-1">{getPaymentStatusBadge(selectedInvoice.TrangThaiThanhToan)}</div>
+                  <div className="mt-1">
+                    {getPaymentStatusBadge(selectedInvoice.TrangThaiThanhToan)}
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Phiếu thuê phòng</Label>
-                  <p className="text-lg font-semibold">{selectedInvoice.MaPhieuThuePhong || "N/A"}</p>
+                  <Label className="text-muted-foreground">
+                    Phiếu thuê phòng
+                  </Label>
+                  <p className="text-lg font-semibold">
+                    {selectedInvoice.PhieuThuePhong?.MaPTP || "N/A"}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Khách hàng</Label>
-                  <p className="text-lg font-semibold">{selectedInvoice.KhachHang || "N/A"}</p>
+                  <p className="text-lg font-semibold">
+                    {selectedInvoice.KhachHang?.HoTen || "N/A"}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Ngày lập</Label>
-                  <p className="text-lg font-semibold">{selectedInvoice.createdAt ? new Date(selectedInvoice.createdAt).toLocaleDateString('vi-VN') : "N/A"}</p>
+                  <p className="text-lg font-semibold">
+                    {selectedInvoice.createdAt
+                      ? new Date(selectedInvoice.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        )
+                      : "N/A"}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Phương thức thanh toán</Label>
-                  <p className="text-lg font-semibold">{selectedInvoice.PhuongThucThanhToan || "N/A"}</p>
+                  <Label className="text-muted-foreground">
+                    Phương thức thanh toán
+                  </Label>
+                  <p className="text-lg font-semibold">
+                    {selectedInvoice.PhuongThucThanhToan?.TenPTTT || "N/A"}
+                  </p>
                 </div>
               </div>
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tiền phòng:</span>
-                  <span className="font-semibold">{(selectedInvoice.TongTienPhong || 0).toLocaleString('vi-VN')} VNĐ</span>
+                  <span className="font-semibold">
+                    {(selectedInvoice.TongTienPhong || 0).toLocaleString(
+                      "vi-VN"
+                    )}{" "}
+                    VNĐ
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tiền dịch vụ:</span>
-                  <span className="font-semibold">{(selectedInvoice.TongTienDichVu || 0).toLocaleString('vi-VN')} VNĐ</span>
+                  <span className="font-semibold">
+                    {(selectedInvoice.TongTienDichVu || 0).toLocaleString(
+                      "vi-VN"
+                    )}{" "}
+                    VNĐ
+                  </span>
                 </div>
                 {selectedInvoice.PhuThu > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Phụ thu:</span>
-                    <span className="font-semibold">+{(selectedInvoice.PhuThu || 0).toLocaleString('vi-VN')} VNĐ</span>
+                    <span className="font-semibold">
+                      +{(selectedInvoice.PhuThu || 0).toLocaleString("vi-VN")}{" "}
+                      VNĐ
+                    </span>
                   </div>
                 )}
                 {selectedInvoice.TienBoiThuong > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Bồi thường:</span>
-                    <span className="font-semibold">-{(selectedInvoice.TienBoiThuong || 0).toLocaleString('vi-VN')} VNĐ</span>
+                    <span className="font-semibold">
+                      -
+                      {(selectedInvoice.TienBoiThuong || 0).toLocaleString(
+                        "vi-VN"
+                      )}{" "}
+                      VNĐ
+                    </span>
                   </div>
                 )}
                 {selectedInvoice.TienDaCoc > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Đã cọc:</span>
-                    <span className="font-semibold">-{(selectedInvoice.TienDaCoc || 0).toLocaleString('vi-VN')} VNĐ</span>
+                    <span className="font-semibold">
+                      -
+                      {(selectedInvoice.TienDaCoc || 0).toLocaleString("vi-VN")}{" "}
+                      VNĐ
+                    </span>
                   </div>
                 )}
                 <div className="border-t pt-2 flex justify-between text-lg">
                   <span className="font-semibold">Tổng cộng:</span>
-                  <span className="font-bold">{calculateTotal(selectedInvoice).toLocaleString('vi-VN')} VNĐ</span>
+                  <span className="font-bold">
+                    {calculateTotal(selectedInvoice).toLocaleString("vi-VN")}{" "}
+                    VNĐ
+                  </span>
                 </div>
               </div>
             </div>
@@ -503,36 +645,58 @@ export default function Invoices() {
             <div className="border rounded-lg p-6 space-y-4">
               <div className="text-center border-b pb-4">
                 <h3 className="text-xl font-bold">HÓA ĐƠN</h3>
-                <p className="text-sm text-muted-foreground">Hệ thống Quản lý Khách sạn</p>
+                <p className="text-sm text-muted-foreground">
+                  Hệ thống Quản lý Khách sạn
+                </p>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Mã hóa đơn:</span>
-                  <span className="font-semibold">{selectedInvoice.MaHoaDon || selectedInvoice._id.substring(0, 8)}</span>
+                  <span className="font-semibold">
+                    {selectedInvoice.MaHD ||
+                      selectedInvoice._id.substring(0, 8)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Ngày lập:</span>
-                  <span className="font-semibold">{selectedInvoice.createdAt ? new Date(selectedInvoice.createdAt).toLocaleDateString('vi-VN') : "N/A"}</span>
+                  <span className="font-semibold">
+                    {selectedInvoice.createdAt
+                      ? new Date(selectedInvoice.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        )
+                      : "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Khách hàng:</span>
-                  <span className="font-semibold">{selectedInvoice.KhachHang || "N/A"}</span>
+                  <span className="font-semibold">
+                    {selectedInvoice.KhachHang?.HoTen || "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Phiếu thuê phòng:</span>
-                  <span className="font-semibold">{selectedInvoice.MaPhieuThuePhong || "N/A"}</span>
+                  <span className="text-muted-foreground">
+                    Phiếu thuê phòng:
+                  </span>
+                  <span className="font-semibold">
+                    {selectedInvoice.PhieuThuePhong?.MaPTP || "N/A"}
+                  </span>
                 </div>
               </div>
               <div className="border-t pt-4">
                 <div className="flex justify-between text-lg">
                   <span className="font-semibold">Tổng cộng:</span>
-                  <span className="font-bold">{calculateTotal(selectedInvoice).toLocaleString('vi-VN')} VNĐ</span>
+                  <span className="font-bold">
+                    {calculateTotal(selectedInvoice).toLocaleString("vi-VN")}{" "}
+                    VNĐ
+                  </span>
                 </div>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPrintOpen(false)}>Hủy</Button>
+            <Button variant="outline" onClick={() => setIsPrintOpen(false)}>
+              Hủy
+            </Button>
             <Button onClick={handleConfirmPrint}>In hóa đơn</Button>
           </DialogFooter>
         </DialogContent>

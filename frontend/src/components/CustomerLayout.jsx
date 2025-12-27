@@ -1,4 +1,8 @@
-import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarInset,
+} from "@/components/ui/sidebar";
 import { CustomerSidebar } from "./CustomerSidebar";
 import { Bell, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +28,9 @@ export function CustomerLayout({ children }) {
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card px-6">
           <div className="flex items-center gap-4">
             <SidebarTrigger />
-            <span className="text-lg font-semibold text-foreground">Cổng thông tin khách hàng</span>
+            <span className="text-lg font-semibold text-foreground">
+              Cổng thông tin khách hàng
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon">
