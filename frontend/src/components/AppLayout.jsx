@@ -1,4 +1,8 @@
-import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarInset,
+} from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar.jsx";
 import { Bell, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +16,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 
@@ -60,7 +71,9 @@ export function AppLayout({ children }) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Tài khoản</p>
+                    <p className="text-sm font-medium leading-none">
+                      Tài khoản
+                    </p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {username}
                     </p>
@@ -91,7 +104,10 @@ export function AppLayout({ children }) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsLogoutDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsLogoutDialogOpen(false)}
+            >
               Hủy
             </Button>
             <Button onClick={handleLogout}>Đăng xuất</Button>

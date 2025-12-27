@@ -27,9 +27,9 @@ import {
 const menuItems = [
   {
     title: "Tổng quan",
-    url: "/",
+    url: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["Admin", "Manager", "Receptionist"],
+    roles: ["Admin", "Manager", "Receptionist", "MaintenanceStaff"],
   },
   {
     title: "Phòng",

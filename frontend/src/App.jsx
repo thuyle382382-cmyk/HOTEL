@@ -40,11 +40,11 @@ const queryClient = new QueryClient();
 ======================= */
 const ProtectedRoute = ({ children, allowRoles }) => {
   const token = localStorage.getItem("token");
-  const userRole = localStorage.getItem("role");
+  const role = localStorage.getItem("role");
 
   if (!token) return <Navigate to="/login" replace />;
 
-  if (allowRoles && !allowRoles.includes(userRole)) {
+  if (allowRoles && !allowRoles.includes(role)) {
     return <Navigate to="/" replace />;
   }
 
@@ -62,10 +62,19 @@ const App = () => (
           <Route path="/login" element={<Login />} />
 
           {/* ===== ADMIN ===== */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
           <Route
-            path="/"
+            path="/dashboard"
             element={
-              <ProtectedRoute allowRoles={["Admin", "Manager", "Receptionist"]}>
+              <ProtectedRoute
+                allowRoles={[
+                  "Admin",
+                  "Manager",
+                  "Receptionist",
+                  "MaintenanceStaff",
+                ]}
+              >
                 <AppLayout>
                   <Dashboard />
                 </AppLayout>
