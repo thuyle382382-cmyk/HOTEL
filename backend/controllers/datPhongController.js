@@ -1,21 +1,21 @@
-const DatPhong = require('../models/DatPhong');
+const DatPhong = require("../models/DatPhong");
 
 // Get all bookings
 exports.getAllBookings = async (req, res) => {
   try {
     const bookings = await DatPhong.find()
-      .populate('KhachHang', 'HoTen SoDT Email')
-      .populate('ChiTietDatPhong.Phong');
+      .populate("KhachHang", "HoTen SoDT Email")
+      .populate("ChiTietDatPhong.Phong");
     res.status(200).json({
       success: true,
-      message: 'Lấy danh sách đặt phòng thành công',
-      data: bookings
+      message: "Lấy danh sách đặt phòng thành công",
+      data: bookings,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi lấy danh sách đặt phòng',
-      error: error.message
+      message: "Lỗi khi lấy danh sách đặt phòng",
+      error: error.message,
     });
   }
 };
@@ -24,24 +24,24 @@ exports.getAllBookings = async (req, res) => {
 exports.getBookingById = async (req, res) => {
   try {
     const booking = await DatPhong.findById(req.params.id)
-      .populate('KhachHang', 'HoTen SoDT Email')
-      .populate('ChiTietDatPhong.Phong');
+      .populate("KhachHang", "HoTen SoDT Email")
+      .populate("ChiTietDatPhong.Phong");
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: 'Đặt phòng không tồn tại'
+        message: "Đặt phòng không tồn tại",
       });
     }
     res.status(200).json({
       success: true,
-      message: 'Lấy thông tin đặt phòng thành công',
-      data: booking
+      message: "Lấy thông tin đặt phòng thành công",
+      data: booking,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi lấy thông tin đặt phòng',
-      error: error.message
+      message: "Lỗi khi lấy thông tin đặt phòng",
+      error: error.message,
     });
   }
 };
@@ -50,19 +50,19 @@ exports.getBookingById = async (req, res) => {
 exports.getBookingsByCustomerId = async (req, res) => {
   try {
     const bookings = await DatPhong.find({ KhachHang: req.params.customerId })
-      .populate('KhachHang', 'HoTen SoDT Email')
-      .populate('ChiTietDatPhong.Phong')
+      .populate("KhachHang", "HoTen SoDT Email")
+      .populate("ChiTietDatPhong.Phong")
       .sort({ NgayDat: -1 });
     res.status(200).json({
       success: true,
-      message: 'Lấy danh sách đặt phòng của khách hàng thành công',
-      data: bookings
+      message: "Lấy danh sách đặt phòng của khách hàng thành công",
+      data: bookings,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi lấy danh sách đặt phòng',
-      error: error.message
+      message: "Lỗi khi lấy danh sách đặt phòng",
+      error: error.message,
     });
   }
 };
@@ -70,24 +70,25 @@ exports.getBookingsByCustomerId = async (req, res) => {
 // Create new booking
 exports.createBooking = async (req, res) => {
   try {
-    const { MaDatPhong, KhachHang, HangPhong, NgayDen, NgayDi, SoKhach, TienCoc, ChiTietDatPhong } = req.body;
+    const {
+      KhachHang,
+      HangPhong,
+      NgayDen,
+      NgayDi,
+      SoKhach,
+      TienCoc,
+      ChiTietDatPhong,
+    } = req.body;
 
-    // Validate input
-    if (!MaDatPhong || !KhachHang || !HangPhong || !NgayDen || !NgayDi || !SoKhach) {
+    if (!KhachHang || !HangPhong || !NgayDen || !NgayDi || !SoKhach) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng cung cấp đủ thông tin đặt phòng'
+        message: "Vui lòng cung cấp đủ thông tin đặt phòng",
       });
     }
 
-    // Check if booking code already exists
-    const existingBooking = await DatPhong.findOne({ MaDatPhong });
-    if (existingBooking) {
-      return res.status(409).json({
-        success: false,
-        message: 'Mã đặt phòng đã tồn tại'
-      });
-    }
+    const count = await DatPhong.countDocuments();
+    const MaDatPhong = `DP${String(count + 1).padStart(3, "0")}`;
 
     const booking = new DatPhong({
       MaDatPhong,
@@ -98,23 +99,23 @@ exports.createBooking = async (req, res) => {
       SoKhach,
       TienCoc: TienCoc || 0,
       ChiTietDatPhong: ChiTietDatPhong || [],
-      TrangThai: 'Pending'
+      TrangThai: "Pending",
     });
 
     await booking.save();
-    await booking.populate('KhachHang', 'HoTen SoDT Email');
-    await booking.populate('ChiTietDatPhong.Phong');
+    await booking.populate("KhachHang", "HoTen SoDT Email");
+    await booking.populate("ChiTietDatPhong.Phong");
 
     res.status(201).json({
       success: true,
-      message: 'Tạo đặt phòng thành công',
-      data: booking
+      message: "Tạo đặt phòng thành công",
+      data: booking,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi tạo đặt phòng',
-      error: error.message
+      message: "Lỗi khi tạo đặt phòng",
+      error: error.message,
     });
   }
 };
@@ -122,7 +123,8 @@ exports.createBooking = async (req, res) => {
 // Update booking
 exports.updateBooking = async (req, res) => {
   try {
-    const { NgayDen, NgayDi, SoKhach, TienCoc, TrangThai, ChiTietDatPhong } = req.body;
+    const { NgayDen, NgayDi, SoKhach, TienCoc, TrangThai, ChiTietDatPhong } =
+      req.body;
 
     const updateData = {};
     if (NgayDen) updateData.NgayDen = NgayDen;
@@ -136,26 +138,27 @@ exports.updateBooking = async (req, res) => {
       req.params.id,
       updateData,
       { new: true, runValidators: true }
-    ).populate('KhachHang', 'HoTen SoDT Email')
-     .populate('ChiTietDatPhong.Phong');
+    )
+      .populate("KhachHang", "HoTen SoDT Email")
+      .populate("ChiTietDatPhong.Phong");
 
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: 'Đặt phòng không tồn tại'
+        message: "Đặt phòng không tồn tại",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Cập nhật đặt phòng thành công',
-      data: booking
+      message: "Cập nhật đặt phòng thành công",
+      data: booking,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi cập nhật đặt phòng',
-      error: error.message
+      message: "Lỗi khi cập nhật đặt phòng",
+      error: error.message,
     });
   }
 };
@@ -165,28 +168,29 @@ exports.cancelBooking = async (req, res) => {
   try {
     const booking = await DatPhong.findByIdAndUpdate(
       req.params.id,
-      { TrangThai: 'Cancelled' },
+      { TrangThai: "Cancelled" },
       { new: true }
-    ).populate('KhachHang', 'HoTen SoDT Email')
-     .populate('ChiTietDatPhong.Phong');
+    )
+      .populate("KhachHang", "HoTen SoDT Email")
+      .populate("ChiTietDatPhong.Phong");
 
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: 'Đặt phòng không tồn tại'
+        message: "Đặt phòng không tồn tại",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Hủy đặt phòng thành công',
-      data: booking
+      message: "Hủy đặt phòng thành công",
+      data: booking,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi hủy đặt phòng',
-      error: error.message
+      message: "Lỗi khi hủy đặt phòng",
+      error: error.message,
     });
   }
 };
@@ -199,20 +203,20 @@ exports.deleteBooking = async (req, res) => {
     if (!booking) {
       return res.status(404).json({
         success: false,
-        message: 'Đặt phòng không tồn tại'
+        message: "Đặt phòng không tồn tại",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Xóa đặt phòng thành công',
-      data: booking
+      message: "Xóa đặt phòng thành công",
+      data: booking,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi xóa đặt phòng',
-      error: error.message
+      message: "Lỗi khi xóa đặt phòng",
+      error: error.message,
     });
   }
 };
