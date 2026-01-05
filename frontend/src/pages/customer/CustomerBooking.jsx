@@ -45,22 +45,37 @@ const roomTypeInfo = {
   Normal: {
     price: 400000,
     description: "Phòng cơ bản, phù hợp nhu cầu ngắn ngày",
-    backendEnum: "Normal",
+    amenities: ["WiFi", "TV", "Điều hòa"],
+    maxGuests: 2,
   },
+
   Standard: {
     price: 600000,
-    description: "Phòng tiêu chuẩn, đầy đủ tiện nghi",
-    backendEnum: "Standard",
+    description: "Phòng tiêu chuẩn với đầy đủ tiện nghi",
+    amenities: ["WiFi", "TV", "Điều hòa", "Tủ lạnh"],
+    maxGuests: 2,
   },
+
   Premium: {
     price: 900000,
     description: "Phòng cao cấp, không gian rộng rãi",
-    backendEnum: "Premium",
+    amenities: ["WiFi", "TV", "Điều hòa", "Mini bar", "Bàn làm việc"],
+    maxGuests: 3,
   },
+
   Luxury: {
     price: 1500000,
-    description: "Phòng sang trọng, dịch vụ cao cấp",
-    backendEnum: "Luxury",
+    description: "Phòng sang trọng với dịch vụ cao cấp",
+    amenities: [
+      "WiFi",
+      "TV",
+      "Điều hòa",
+      "Mini bar",
+      "Bồn tắm",
+      "Ban công",
+      "Phòng khách",
+    ],
+    maxGuests: 4,
   },
 };
 
