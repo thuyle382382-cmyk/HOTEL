@@ -1,22 +1,23 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = "http://localhost:5000/api";
 const API_URL = `${API_BASE_URL}/maintenance`;
 
-const getToken = () => localStorage.getItem('token');
+const getToken = () => localStorage.getItem("token");
 
 const getHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${getToken()}`
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
 });
 
 const getMaintenanceRecords = async () => {
   try {
     const res = await fetch(API_URL, {
-      headers: getHeaders()
+      headers: getHeaders(),
     });
-    if (!res.ok) throw new Error('Failed to fetch maintenance records');
-    return await res.json();
+    if (!res.ok) throw new Error("Failed to fetch maintenance records");
+    const response = await res.json();
+    return response.data || [];
   } catch (err) {
-    console.error('Error fetching maintenance records:', err);
+    console.error("Error fetching maintenance records:", err);
     throw err;
   }
 };
@@ -24,12 +25,13 @@ const getMaintenanceRecords = async () => {
 const getMaintenanceRecordById = async (id) => {
   try {
     const res = await fetch(`${API_URL}/${id}`, {
-      headers: getHeaders()
+      headers: getHeaders(),
     });
-    if (!res.ok) throw new Error('Failed to fetch maintenance record');
-    return await res.json();
+    if (!res.ok) throw new Error("Failed to fetch maintenance record");
+    const response = await res.json();
+    return response.data;
   } catch (err) {
-    console.error('Error fetching maintenance record:', err);
+    console.error("Error fetching maintenance record:", err);
     throw err;
   }
 };
@@ -37,17 +39,18 @@ const getMaintenanceRecordById = async (id) => {
 const createMaintenanceRecord = async (data) => {
   try {
     const res = await fetch(API_URL, {
-      method: 'POST',
+      method: "POST",
       headers: getHeaders(),
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(err.message || 'Failed to create maintenance record');
+      throw new Error(err.message || "Failed to create maintenance record");
     }
-    return await res.json();
+    const response = await res.json();
+    return response.data;
   } catch (err) {
-    console.error('Error creating maintenance record:', err);
+    console.error("Error creating maintenance record:", err);
     throw err;
   }
 };
@@ -55,17 +58,18 @@ const createMaintenanceRecord = async (data) => {
 const updateMaintenanceRecord = async (id, data) => {
   try {
     const res = await fetch(`${API_URL}/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: getHeaders(),
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(err.message || 'Failed to update maintenance record');
+      throw new Error(err.message || "Failed to update maintenance record");
     }
-    return await res.json();
+    const response = await res.json();
+    return response.data;
   } catch (err) {
-    console.error('Error updating maintenance record:', err);
+    console.error("Error updating maintenance record:", err);
     throw err;
   }
 };
@@ -73,13 +77,14 @@ const updateMaintenanceRecord = async (id, data) => {
 const deleteMaintenanceRecord = async (id) => {
   try {
     const res = await fetch(`${API_URL}/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders()
+      method: "DELETE",
+      headers: getHeaders(),
     });
-    if (!res.ok) throw new Error('Failed to delete maintenance record');
-    return await res.json();
+    if (!res.ok) throw new Error("Failed to delete maintenance record");
+    const response = await res.json();
+    return response.data;
   } catch (err) {
-    console.error('Error deleting maintenance record:', err);
+    console.error("Error deleting maintenance record:", err);
     throw err;
   }
 };
@@ -89,5 +94,5 @@ export default {
   getMaintenanceRecordById,
   createMaintenanceRecord,
   updateMaintenanceRecord,
-  deleteMaintenanceRecord
+  deleteMaintenanceRecord,
 };
