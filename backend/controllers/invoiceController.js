@@ -49,7 +49,14 @@ exports.create = async (req, res, next) => {
           TienDaCoc = ptp.DatPhong?.TienCoc || 0;
         }
 
-const roomTypePrices = { Normal: 400000, Standard: 600000, Premium: 900000, Luxury: 1500000 };
+          
+          let roomTypePrices = { Normal: 0, Standard: 0, Premium: 0, Luxury: 0 };
+          try {
+             const settings = await CaiDat.findOne({ Key: "GeneralSettings" });
+             if (settings && settings.GiaPhongCoBan) {
+               roomTypePrices = settings.GiaPhongCoBan;
+             }
+          } catch(err) { console.error("Error fetching settings for invoice:", err); }
 
         // Calculate booked nights from original booking dates
         if (TongTienPhong === undefined || TongTienPhong === null || TongTienPhong === "") {
@@ -344,7 +351,13 @@ exports.getPreview = async (req, res, next) => {
       return res.status(404).json({ message: "Rental receipt not found" });
     }
 
-    const roomTypePrices = { Normal: 400000, Standard: 600000, Premium: 900000, Luxury: 1500000 };
+    let roomTypePrices = { Normal: 0, Standard: 0, Premium: 0, Luxury: 0 };
+    try {
+        const settings = await CaiDat.findOne({ Key: "GeneralSettings" });
+        if (settings && settings.GiaPhongCoBan) {
+          roomTypePrices = settings.GiaPhongCoBan;
+        }
+    } catch(err) { console.error("Error fetching settings for invoice preview:", err); }
     // CRITICAL BUSINESS RULE: Price based on BOOKED duration, NOT actual stay
     // Calculate booked nights from original booking dates
     const ngayDen = new Date(ptp.DatPhong?.NgayDen);

@@ -34,33 +34,35 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { roomApi, roomTypeApi } from "@/api";
+import { roomApi, roomTypeApi, settingApi } from "@/api";
 
 // Room category definitions
-const roomCategories = {
+// Initial room categories (fallback)
+const initialRoomCategories = {
   Normal: {
     name: "Normal",
     description: "Phòng cơ bản, phù hợp nhu cầu ngắn ngày",
-    price: 400000,
+    price: 0,
   },
   Standard: {
     name: "Standard",
     description: "Phòng tiêu chuẩn với đầy đủ tiện nghi",
-    price: 600000,
+    price: 0,
   },
   Premium: {
     name: "Premium",
     description: "Phòng cao cấp với không gian rộng rãi",
-    price: 900000,
+    price: 0,
   },
   Luxury: {
     name: "Luxury",
     description: "Phòng sang trọng với dịch vụ cao cấp",
-    price: 1500000,
+    price: 0,
   },
 };
 
 export default function Rooms() {
+  const [roomCategories, setRoomCategories] = useState(initialRoomCategories);
   const [roomTypes, setRoomTypes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -81,7 +83,24 @@ export default function Rooms() {
 
   useEffect(() => {
     loadRooms();
+    fetchSettings();
   }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await settingApi.getSettings();
+      if (res && res.data && res.data.GiaPhongCoBan) {
+         const prices = res.data.GiaPhongCoBan;
+         setRoomCategories(prev => ({
+           ...prev,
+           Normal: { ...prev.Normal, price: prices.Normal || prev.Normal.price },
+           Standard: { ...prev.Standard, price: prices.Standard || prev.Standard.price },
+           Premium: { ...prev.Premium, price: prices.Premium || prev.Premium.price },
+           Luxury: { ...prev.Luxury, price: prices.Luxury || prev.Luxury.price },
+         }));
+      }
+    } catch(err) { console.error("Could not load settings in Rooms:", err); }
+  };
 
   const loadRooms = async () => {
     setIsLoading(true);
@@ -506,9 +525,8 @@ export default function Rooms() {
                 type="number"
                 placeholder="Tự động điền từ hạng phòng"
                 value={formData.GiaPhong}
-                onChange={(e) =>
-                  setFormData({ ...formData, GiaPhong: e.target.value })
-                }
+                readOnly
+                className="bg-muted cursor-not-allowed"
               />
             </div>
             <div className="grid gap-2">
@@ -640,9 +658,8 @@ export default function Rooms() {
                   id="edit-price"
                   type="number"
                   value={formData.GiaPhong}
-                  onChange={(e) =>
-                    setFormData({ ...formData, GiaPhong: e.target.value })
-                  }
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
                 />
               </div>
               <div className="grid gap-2">

@@ -454,27 +454,7 @@ export default function Invoices() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="customer">Khách hàng</Label>
-              <Select
-                value={formData.KhachHang}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, KhachHang: v })
-                }
-                disabled={!!formData.PhieuThuePhong}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn khách hàng" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((c) => (
-                    <SelectItem key={c._id} value={c._id}>
-                      {c.HoTen}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
             {formData.HoTenKhachHang && (
               <div className="grid gap-2">
                 <Label>Khách hàng (Tự động)</Label>
@@ -499,9 +479,8 @@ export default function Invoices() {
                 id="serviceTotal"
                 type="number"
                 value={formData.TongTienDichVu}
-                onChange={(e) =>
-                  setFormData({ ...formData, TongTienDichVu: e.target.value })
-                }
+                readOnly
+                className="bg-muted cursor-not-allowed"
               />
             </div>
             <div className="grid gap-2">
@@ -532,9 +511,8 @@ export default function Invoices() {
                 id="deposit"
                 type="number"
                 value={formData.TienDaCoc}
-                onChange={(e) =>
-                  setFormData({ ...formData, TienDaCoc: e.target.value })
-                }
+                readOnly
+                className="bg-muted cursor-not-allowed"
               />
             </div>
             <div className="grid gap-2">
