@@ -8,7 +8,7 @@ function isOverlap(aStart, aEnd, bStart, bEnd) {
 }
 
 // Helper to find available room for category and dates
-const findAvailableRoom = async (hangPhong, startDate, endDate) => {
+const findAvailableRoom = async (hangPhong, startDate, endDate, excludeBookingId = null) => {
   try {
     const loaiPhong = await LoaiPhong.findOne({ TenLoaiPhong: hangPhong });
     if (!loaiPhong) return null;
@@ -20,13 +20,19 @@ const findAvailableRoom = async (hangPhong, startDate, endDate) => {
 
     for (const room of rooms) {
       // Check if this room has any overlapping bookings
-      const overlapping = await DatPhong.findOne({
+      const query = {
         "ChiTietDatPhong.Phong": room._id,
-        TrangThai: { $nin: ["Cancelled", "CheckedOut", "NoShow", "Pending"] },
+        TrangThai: { $nin: ["Cancelled", "CheckedOut", "NoShow"] },
         $or: [
           { NgayDen: { $lt: end }, NgayDi: { $gt: start } }
         ]
-      });
+      };
+
+      if (excludeBookingId) {
+        query._id = { $ne: excludeBookingId };
+      }
+
+      const overlapping = await DatPhong.findOne(query);
       
       if (!overlapping) return room;
     }
@@ -38,10 +44,23 @@ const findAvailableRoom = async (hangPhong, startDate, endDate) => {
 
 exports.create = async (req, res, next) => {
   try {
-    const { MaDatPhong, KhachHang, HangPhong, NgayDen, NgayDi, SoKhach, TienCoc } = req.body;
+    let { MaDatPhong, KhachHang, HangPhong, NgayDen, NgayDi, SoKhach, TienCoc } = req.body;
     
-    if (!MaDatPhong || !KhachHang || !HangPhong || !NgayDen || !NgayDi || !SoKhach) {
+    if (!KhachHang || !HangPhong || !NgayDen || !NgayDi || !SoKhach) {
       return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Auto-generate MaDatPhong if missing
+    if (!MaDatPhong) {
+        const lastBooking = await DatPhong.findOne().sort({ MaDatPhong: -1 });
+        let nextId = 1;
+        if (lastBooking && lastBooking.MaDatPhong) {
+            const match = lastBooking.MaDatPhong.match(/DP(\d+)/);
+            if (match) {
+                nextId = parseInt(match[1], 10) + 1;
+            }
+        }
+        MaDatPhong = `DP${String(nextId).padStart(3, '0')}`;
     }
 
     const start = new Date(NgayDen);
@@ -49,12 +68,16 @@ exports.create = async (req, res, next) => {
     if (start >= end) return res.status(400).json({ message: 'Invalid dates' });
 
     // Check for overlapping bookings
+    // Check for overlapping bookings - REMOVED incorrect global check
+    // The system should check for room availability instead (handled below by findAvailableRoom)
+    /* 
     const existing = await DatPhong.find({ TrangThai: { $ne: 'Cancelled' } });
     for (const e of existing) {
       if (isOverlap(start, end, new Date(e.NgayDen), new Date(e.NgayDi))) {
         return res.status(409).json({ message: 'Booking already exists for given dates' });
       }
     }
+    */
 
     let ChiTietDatPhong = req.body.ChiTietDatPhong || [];
 
@@ -128,51 +151,10 @@ exports.createWalkIn = async (req, res, next) => {
     if (start >= end) return res.status(400).json({ message: 'Invalid dates' });
 
     // Check availability
-    const existing = await DatPhong.find({ TrangThai: { $ne: 'Cancelled' } });
-    for (const e of existing) {
-      if (isOverlap(start, end, new Date(e.NgayDen), new Date(e.NgayDi))) {
-         // Note: Strictly speaking we should check overlapping rooms, but this logic assumes strict room locking or simply checks if ANY booking overlaps?
-         // The original code checked ALL bookings which is aggressive, but I'll stick to original logic's pattern or improve it?
-         // Original code:
-         // for (const e of existing) {
-         //   if (isOverlap(...)) return 409
-         // }
-         // This actually prevents ANY concurrent bookings? 
-         // Wait, the original code lines 51-56 seem to block ANY overlapping booking regardless of room count?
-         // Let's look at the original code carefully:
-         // Line 51: const existing = await DatPhong.find...
-         // Line 53: if (isOverlap(...)) return 409
-         // This implies the system only supports ONE booking at a time? Or maybe I misread.
-         // Ah, line 60: "Auto-assign room if not provided".
-         // The original code seemingly checks GLOBAL overlap? That seems wrong for a hotel with multiple rooms.
-         // However, I will preserve the *pattern* of the original 'create' method but maybe assume the user wants standard behavior.
-         // Let's just reuse the logic from 'create' but with our new 'customer._id'.
-      }
-    }
-    
-    // Actually, let's just invoke the logic similar to 'create' but we can't easily call it.
-    // I'll copy the logic for availability check from 'create' to be safe.
-    // BUT the original code has a bug or strict constraint: 
-    // It iterates ALL existing bookings and if ANY time overlaps, sends 409. 
-    // This effectively makes it a 1-booking-system? 
-    // Let's check finding available room logic (findAvailableRoom).
-    
-    // Optimization: Let's assume the user wants me to copy the logic.
-    // I will disable the global overlap check if it looks wrong, OR replicate it if that's the intention.
-    // Let's trust the logic: "Check for overlapping bookings" - if it returns 409, it returns 409.
-    
-    // Replicating original simplified check:
-    for (const e of existing) {
-       if (isOverlap(start, end, new Date(e.NgayDen), new Date(e.NgayDi))) {
-           // We only care if we run out of rooms, but the original code returns 409 immediately.
-           // I will comment this out or make it smarter? 
-           // No, strictly follow existing pattern to avoid breaking 'status quo' unless asked.
-           // BUT this might be why they asked for "fix".
-           // I'll skip the global check and rely on `findAvailableRoom`.
-       }
-    }
-    
-    // Better logic: Check if we can find a room.
+    // Check availability - REMOVED incorrect global check
+    // Rely on room availability check below
+    // Check availability: Existing logic assumes we check available rooms later using findAvailableRoom
+
     let finalChiTiet = ChiTietDatPhong || [];
     if (finalChiTiet.length === 0) {
         const room = await findAvailableRoom(HangPhong, start, end);
@@ -185,8 +167,21 @@ exports.createWalkIn = async (req, res, next) => {
         }];
     }
 
+    // Auto-generate MaDatPhong if missing
+    if (!MaDatPhong) {
+        const lastBooking = await DatPhong.findOne().sort({ MaDatPhong: -1 });
+        let nextId = 1;
+        if (lastBooking && lastBooking.MaDatPhong) {
+            const match = lastBooking.MaDatPhong.match(/DP(\d+)/);
+            if (match) {
+                nextId = parseInt(match[1], 10) + 1;
+            }
+        }
+        MaDatPhong = `DP${String(nextId).padStart(3, '0')}`;
+    }
+
     const datPhong = await DatPhong.create({
-      MaDatPhong: MaDatPhong || `DP${Math.floor(100 + Math.random() * 900)}`,
+      MaDatPhong,
       KhachHang: customer._id,
       HangPhong,
       NgayDen: start,
@@ -226,23 +221,71 @@ exports.update = async (req, res, next) => {
     const updateData = { ...req.body };
     
     // If HangPhong, dates changed, or checking in, and no room assigned, try to auto-assign
-    if ((updateData.HangPhong || updateData.NgayDen || updateData.NgayDi || updateData.TrangThai === 'CheckedIn') && 
-        (!updateData.ChiTietDatPhong || updateData.ChiTietDatPhong.length === 0)) {
+    // If status is changing to 'Confirmed' or 'CheckedIn', OR if details changed, we must validate/assign room
+    if ((updateData.HangPhong || updateData.NgayDen || updateData.NgayDi || 
+        ['Confirmed', 'CheckedIn'].includes(updateData.TrangThai))) {
       
-      const current = await DatPhong.findById(req.params.id);
-      if (current) {
-        const hp = updateData.HangPhong || current.HangPhong;
-        const start = updateData.NgayDen ? new Date(updateData.NgayDen) : current.NgayDen;
-        const end = updateData.NgayDi ? new Date(updateData.NgayDi) : current.NgayDi;
-        
-        const room = await findAvailableRoom(hp, start, end);
-        if (room) {
-          updateData.ChiTietDatPhong = [{
-            MaCTDP: `CTDP${Date.now()}`,
-            Phong: room._id
-          }];
-        }
-      }
+       const current = await DatPhong.findById(req.params.id);
+       if (current) {
+         // Get effective data
+         const hp = updateData.HangPhong || current.HangPhong;
+         const start = updateData.NgayDen ? new Date(updateData.NgayDen) : current.NgayDen;
+         const end = updateData.NgayDi ? new Date(updateData.NgayDi) : current.NgayDi;
+
+         // Check if we need to assign a room OR validate existing assignment
+         // If no room assigned, or if we are confirming/checking in, let's be safe and check availability
+         // Note: If room is ALREADY assigned, findAvailableRoom might fail because it sees ITSELF as overlap?
+         // findAvailableRoom checks *other* bookings. But we passed start/end.
+         // Wait, findAvailableRoom checks `DatPhong` collection.
+         // If "current" booking is in DB (it is), and it has status 'Pending' (it does), 
+         // and we now include 'Pending' in check...
+         // Then findAvailableRoom will find 'current' booking as overlapping itself!
+         // FIX: findAvailableRoom needs to exclude the current booking ID.
+         // We should update findAvailableRoom signature or logic.
+         // Ideally, `findAvailableRoom` checks *rooms*.
+         
+         // Let's assume for now we only auto-assign if missing. 
+         // If confirming, we must ensure the *assigned* room is not Double Booked.
+         
+         if (!updateData.ChiTietDatPhong && (!current.ChiTietDatPhong || current.ChiTietDatPhong.length === 0)) {
+             // Case 1: No room assigned yet. Find one.
+             const room = await findAvailableRoom(hp, start, end, current._id); // We need to handle excludeId
+             if (room) {
+                updateData.ChiTietDatPhong = [{
+                    MaCTDP: `CTDP${Date.now()}`,
+                    Phong: room._id
+                }];
+             } else {
+                 if (['Confirmed', 'CheckedIn'].includes(updateData.TrangThai)) {
+                     return res.status(400).json({ message: `Không còn phòng trống cho hạng ${hp}.` });
+                 }
+             }
+         } else {
+             // Case 2: Room already assigned. Verify it's still available if we are Checking In?
+             // Since we essentially "Reserved" it at creation (by including Pending in blocked list), we *should* be safe.
+             // The only risk is if we created double Pending bookings *before* this fix.
+             // To be robust: Check if the assigned room overlaps with any *other* NON-CANCELLED booking.
+             // We can skip this complex check if we rely on the creation fix. 
+             // BUT user asked to fix existing issue.
+             // Let's trust that including 'Pending' in findAvailableRoom fixes the root cause.
+             // If we really want to block updates for bad data:
+             if (['Confirmed', 'CheckedIn'].includes(updateData.TrangThai)) {
+                 // Ensure we don't have double booking for this room
+                 const assignedRoomId = updateData.ChiTietDatPhong?.[0]?.Phong || current.ChiTietDatPhong?.[0]?.Phong;
+                 if (assignedRoomId) {
+                     const isDouble = await DatPhong.findOne({
+                         _id: { $ne: current._id },
+                         "ChiTietDatPhong.Phong": assignedRoomId,
+                         TrangThai: { $nin: ['Cancelled', 'CheckedOut', 'NoShow'] }, // Any valid booking
+                         $or: [ { NgayDen: { $lt: end }, NgayDi: { $gt: start } } ]
+                     });
+                     if (isDouble) {
+                         return res.status(400).json({ message: `Phòng đã bị trùng lịch với booking ${isDouble.MaDatPhong}.` });
+                     }
+                 }
+             }
+         }
+       }
     }
 
     const datPhong = await DatPhong.findByIdAndUpdate(req.params.id, updateData, { new: true })

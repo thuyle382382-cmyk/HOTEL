@@ -2,6 +2,7 @@ const HoaDon = require("../models/HoaDon");
 const PhieuThuePhong = require("../models/PhieuThuePhong");
 const DichVu = require("../models/DichVu");
 const SuDungDichVu = require("../models/SuDungDichVu");
+const CaiDat = require("../models/CaiDat");
 
 exports.create = async (req, res, next) => {
   try {
