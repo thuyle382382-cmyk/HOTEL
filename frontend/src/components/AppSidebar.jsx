@@ -11,6 +11,7 @@ import {
   BarChart3,
   Settings,
   Hotel,
+  Calendar,
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,6 +24,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
+
 
 const menuItems = [
   {
@@ -41,6 +43,12 @@ const menuItems = [
     title: "Đặt phòng",
     url: "/bookings",
     icon: CalendarCheck,
+    roles: ["Admin", "Manager", "Receptionist"],
+  },
+  {
+    title: "Lịch",
+    url: "/calendar",
+    icon: Calendar,
     roles: ["Admin", "Manager", "Receptionist"],
   },
   {
@@ -87,8 +95,10 @@ const menuItems = [
   },
 ];
 
+
 export function AppSidebar() {
   const role = localStorage.getItem("role");
+
 
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar">
@@ -106,11 +116,13 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
+
       <SidebarContent className="bg-sidebar">
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/70 px-3">
             Menu chính
           </SidebarGroupLabel>
+
 
           <SidebarGroupContent>
             <SidebarMenu>
@@ -143,3 +155,6 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+
+
