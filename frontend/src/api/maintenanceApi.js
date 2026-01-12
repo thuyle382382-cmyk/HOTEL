@@ -1,12 +1,15 @@
 const API_BASE_URL = "http://localhost:5000/api";
 const API_URL = `${API_BASE_URL}/maintenance`;
 
+
 const getToken = () => localStorage.getItem("token");
+
 
 const getHeaders = () => ({
   "Content-Type": "application/json",
   Authorization: `Bearer ${getToken()}`,
 });
+
 
 const getMaintenanceRecords = async () => {
   try {
@@ -22,6 +25,7 @@ const getMaintenanceRecords = async () => {
   }
 };
 
+
 const getMaintenanceRecordById = async (id) => {
   try {
     const res = await fetch(`${API_URL}/${id}`, {
@@ -35,6 +39,7 @@ const getMaintenanceRecordById = async (id) => {
     throw err;
   }
 };
+
 
 const createMaintenanceRecord = async (data) => {
   try {
@@ -55,6 +60,7 @@ const createMaintenanceRecord = async (data) => {
   }
 };
 
+
 const updateMaintenanceRecord = async (id, data) => {
   try {
     const res = await fetch(`${API_URL}/${id}`, {
@@ -74,6 +80,7 @@ const updateMaintenanceRecord = async (id, data) => {
   }
 };
 
+
 const deleteMaintenanceRecord = async (id) => {
   try {
     const res = await fetch(`${API_URL}/${id}`, {
@@ -89,6 +96,7 @@ const deleteMaintenanceRecord = async (id) => {
   }
 };
 
+
 const getNextMaPBTCode = async () => {
     try {
       const res = await fetch(`${API_URL}/next-code`, {
@@ -102,7 +110,43 @@ const getNextMaPBTCode = async () => {
       throw err;
     }
   };
-  
+
+
+// Guest functions
+const getMaintenanceRequestsForGuest = async () => {
+  try {
+    const res = await fetch(`${API_URL}/guest/requests`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch maintenance requests");
+    const response = await res.json();
+    return response.data || [];
+  } catch (err) {
+    console.error("Error fetching maintenance requests:", err);
+    throw err;
+  }
+};
+
+
+const createMaintenanceRequest = async (data) => {
+  try {
+    const res = await fetch(`${API_URL}/guest/request`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || "Failed to create maintenance request");
+    }
+    const response = await res.json();
+    return response.data;
+  } catch (err) {
+    console.error("Error creating maintenance request:", err);
+    throw err;
+  }
+};
+ 
 export default {
   getNextMaPBTCode,
   getMaintenanceRecords,
@@ -110,4 +154,9 @@ export default {
   createMaintenanceRecord,
   updateMaintenanceRecord,
   deleteMaintenanceRecord,
+  getMaintenanceRequestsForGuest,
+  createMaintenanceRequest,
 };
+
+
+
