@@ -1,237 +1,50 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
-const crypto = require("crypto");
-const TaiKhoan = require("../models/TaiKhoan");
-const NhanVien = require("../models/NhanVien");
-const KhachHang = require("../models/KhachHang");
+const authService = require("../services/authService");
 
 exports.register = async (req, res, next) => {
   try {
-    const { TenDangNhap, MatKhau, VaiTro, HoTen, CMND, SDT, Email, DiaChi } = req.body;
-
-    if (!TenDangNhap || !MatKhau || !VaiTro) {
-      return res
-        .status(400)
-        .json({ message: "TenDangNhap, MatKhau, and VaiTro are required" });
-    }
-
-    const existingAccount = await TaiKhoan.findOne({ TenDangNhap });
-    if (existingAccount) {
-      return res.status(409).json({ message: "Account already exists" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const matKhauHash = await bcrypt.hash(MatKhau, salt);
-
-    const taiKhoan = await TaiKhoan.create({
-      TenDangNhap,
-      MatKhau: matKhauHash,
-      VaiTro,
-    });
-
-    // If Customer role, handle KhachHang linkage
-    if (VaiTro === "Customer") {
-      try {
-        const lookupEmail = Email || TenDangNhap;
-        // 1. Check if a KhachHang record already exists for this Email
-        let existingKH = await KhachHang.findOne({ Email: lookupEmail });
-
-        if (existingKH) {
-          // If profile exists, link it to the new TaiKhoan
-          existingKH.TaiKhoan = taiKhoan._id;
-          // Optionally update other fields if provided
-          if (HoTen) existingKH.HoTen = HoTen;
-          if (CMND) existingKH.CMND = CMND;
-          if (SDT) existingKH.SDT = SDT;
-          if (DiaChi) existingKH.DiaChi = DiaChi;
-          await existingKH.save();
-        } else {
-          // 2. If no profile exists, create a new one
-          const lastCustomer = await KhachHang.findOne()
-            .sort({ MaKH: -1 })
-            .select("MaKH");
-
-          let nextNumber = 1;
-          if (lastCustomer && lastCustomer.MaKH) {
-            const match = lastCustomer.MaKH.match(/KH(\d+)/);
-            if (match) {
-              nextNumber = parseInt(match[1]) + 1;
-            }
-          }
-
-          const makh = "KH" + String(nextNumber).padStart(3, "0");
-          await KhachHang.create({
-            MaKH: makh,
-            TaiKhoan: taiKhoan._id,
-            HoTen: HoTen || "Khách hàng mới",
-            CMND: CMND || "CMND_" + Date.now(),
-            SDT: SDT || "0000000000",
-            Email: lookupEmail,
-            DiaChi: DiaChi || ""
-          });
-        }
-      } catch (customerError) {
-        console.error("Error linking/creating customer record:", customerError);
-        // Account exists, but profile link failed. We log it and continue.
-      }
-    }
-
-    res.status(201).json({
-      id: taiKhoan._id,
-      TenDangNhap: taiKhoan.TenDangNhap,
-      VaiTro: taiKhoan.VaiTro,
-    });
+    const result = await authService.register(req.body);
+    res.status(201).json(result);
   } catch (err) {
-    console.error("Registration error:", err);
+    if (err.status) {
+      return res.status(err.status).json({ message: err.message, details: err.details });
+    }
     next(err);
   }
 };
 
 exports.login = async (req, res, next) => {
   try {
-    const { TenDangNhap, MatKhau } = req.body;
-
-    if (!TenDangNhap || !MatKhau) {
-      return res
-        .status(400)
-        .json({ message: "TenDangNhap and MatKhau are required" });
-    }
-
-    const taiKhoan = await TaiKhoan.findOne({ TenDangNhap });
-    if (!taiKhoan) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const isValid = await bcrypt.compare(MatKhau, taiKhoan.MatKhau);
-    if (!isValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const token = jwt.sign(
-      {
-        id: taiKhoan._id,
-        VaiTro: taiKhoan.VaiTro,
-        TenDangNhap: taiKhoan.TenDangNhap,
-      },
-      process.env.JWT_SECRET || "secretkey",
-      { expiresIn: "8h" }
-    );
-
-    res.json({ token, VaiTro: taiKhoan.VaiTro });
+    const result = await authService.login(req.body);
+    res.json(result);
   } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ message: err.message });
+    }
     next(err);
   }
 };
 
 exports.forgotPassword = async (req, res, next) => {
   try {
-    const { Email } = req.body;
-
-    if (!Email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
-
-    // Find customer by email
-    const customer = await KhachHang.findOne({ Email });
-    if (!customer || !customer.TaiKhoan) {
-      return res.status(404).json({ message: "No account found with this email" });
-    }
-
-    const taiKhoan = await TaiKhoan.findById(customer.TaiKhoan);
-    if (!taiKhoan) {
-      return res.status(404).json({ message: "Account not found" });
-    }
-
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    taiKhoan.resetOTP = otp;
-    taiKhoan.resetOTPExpires = Date.now() + 600000; // 10 minutes
-    await taiKhoan.save();
-
-    // Send email
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: customer.Email,
-      subject: "Mã xác thực đặt lại mật khẩu",
-      text: `Mã OTP của bạn là: ${otp}. Mã có hiệu lực trong 10 phút.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-          <h2 style="color: #333;">Đặt lại mật khẩu</h2>
-          <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản tại <strong>Hotel Management System</strong>.</p>
-          <p>Mã xác thực (OTP) của bạn là:</p>
-          <div style="font-size: 24px; font-weight: bold; color: #d90429; letter-spacing: 5px; margin: 20px 0;">
-            ${otp}
-          </div>
-          <p>Mã này sẽ hết hạn sau <strong>10 phút</strong>.</p>
-          <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
-        </div>
-      `,
-    };
-
-    // For development, if EMAIL_USER is not set, we just log the OTP
-    if (!process.env.EMAIL_USER) {
-      console.log("-----------------------------------------");
-      console.log(`[DEV] OTP for ${customer.Email}: ${otp}`);
-      console.log("-----------------------------------------");
-      return res.json({ message: "Email simulation (check server console for OTP code)", otp });
-    }
-
-    try {
-      await transporter.sendMail(mailOptions);
-      res.json({ message: "Email sent" });
-    } catch (mailError) {
-      console.error("Mail sending error:", mailError);
-      return res.status(500).json({ 
-        message: "Lỗi cấu hình email SMTP (535). Vui lòng đảm bảo bạn đã nhập đúng 'Mật khẩu ứng dụng' trong file .env và đã bật xác minh 2 bước cho Gmail.",
-        details: mailError.message 
-      });
-    }
+    const result = await authService.forgotPassword(req.body);
+    res.json(result);
   } catch (err) {
-    console.error("Forgot password error:", err);
+    if (err.status) {
+      return res.status(err.status).json({ message: err.message, details: err.details });
+    }
     next(err);
   }
 };
 
 exports.resetPasswordWithOTP = async (req, res, next) => {
   try {
-    const { Email, OTP, MatKhau } = req.body;
-
-    if (!Email || !OTP || !MatKhau) {
-      return res.status(400).json({ message: "Email, OTP and New Password are required" });
-    }
-
-    const customer = await KhachHang.findOne({ Email });
-    if (!customer || !customer.TaiKhoan) {
-      return res.status(404).json({ message: "Account not found" });
-    }
-
-    const taiKhoan = await TaiKhoan.findOne({
-      _id: customer.TaiKhoan,
-      resetOTP: OTP,
-      resetOTPExpires: { $gt: Date.now() },
-    });
-
-    if (!taiKhoan) {
-      return res.status(400).json({ message: "Mã OTP không chính xác hoặc đã hết hạn" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    taiKhoan.MatKhau = await bcrypt.hash(MatKhau, salt);
-    taiKhoan.resetOTP = undefined;
-    taiKhoan.resetOTPExpires = undefined;
-    await taiKhoan.save();
-
-    res.json({ message: "Mật khẩu đã được đặt lại thành công" });
+    const result = await authService.resetPasswordWithOTP(req.body);
+    res.json(result);
   } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ message: err.message });
+    }
     next(err);
   }
 };
+

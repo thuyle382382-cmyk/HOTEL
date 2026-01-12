@@ -2,198 +2,34 @@ const DatPhong = require('../models/DatPhong');
 const Phong = require('../models/Phong');
 const LoaiPhong = require('../models/LoaiPhong');
 const KhachHang = require('../models/KhachHang');
+const bookingService = require('../services/bookingService');
 
-function isOverlap(aStart, aEnd, bStart, bEnd) {
-  return (aStart < bEnd) && (bStart < aEnd);
-}
 
-// Helper to find available room for category and dates
-const findAvailableRoom = async (hangPhong, startDate, endDate, excludeBookingId = null) => {
-  try {
-    const loaiPhong = await LoaiPhong.findOne({ TenLoaiPhong: hangPhong });
-    if (!loaiPhong) return null;
+// Helper findAvailableRoom moved to service
 
-    const rooms = await Phong.find({ LoaiPhong: loaiPhong._id });
-    
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    for (const room of rooms) {
-      // Check if this room has any overlapping bookings
-      const query = {
-        "ChiTietDatPhong.Phong": room._id,
-        TrangThai: { $nin: ["Cancelled", "CheckedOut", "NoShow"] },
-        $or: [
-          { NgayDen: { $lt: end }, NgayDi: { $gt: start } }
-        ]
-      };
-
-      if (excludeBookingId) {
-        query._id = { $ne: excludeBookingId };
-      }
-
-      const overlapping = await DatPhong.findOne(query);
-      
-      if (!overlapping) return room;
-    }
-  } catch (error) {
-    console.error("Error finding available room:", error);
-  }
-  return null;
-};
 
 exports.create = async (req, res, next) => {
   try {
-    let { MaDatPhong, KhachHang, HangPhong, NgayDen, NgayDi, SoKhach, TienCoc } = req.body;
-    
-    if (!KhachHang || !HangPhong || !NgayDen || !NgayDi || !SoKhach) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    const result = await bookingService.createBooking(req.body);
+    res.json(result);
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ message: err.message });
     }
-
-    // Auto-generate MaDatPhong if missing
-    if (!MaDatPhong) {
-        const lastBooking = await DatPhong.findOne().sort({ MaDatPhong: -1 });
-        let nextId = 1;
-        if (lastBooking && lastBooking.MaDatPhong) {
-            const match = lastBooking.MaDatPhong.match(/DP(\d+)/);
-            if (match) {
-                nextId = parseInt(match[1], 10) + 1;
-            }
-        }
-        MaDatPhong = `DP${String(nextId).padStart(3, '0')}`;
-    }
-
-    const start = new Date(NgayDen);
-    const end = new Date(NgayDi);
-    if (start >= end) return res.status(400).json({ message: 'Invalid dates' });
-
-    // Check for overlapping bookings
-    // Check for overlapping bookings - REMOVED incorrect global check
-    // The system should check for room availability instead (handled below by findAvailableRoom)
-    /* 
-    const existing = await DatPhong.find({ TrangThai: { $ne: 'Cancelled' } });
-    for (const e of existing) {
-      if (isOverlap(start, end, new Date(e.NgayDen), new Date(e.NgayDi))) {
-        return res.status(409).json({ message: 'Booking already exists for given dates' });
-      }
-    }
-    */
-
-    let ChiTietDatPhong = req.body.ChiTietDatPhong || [];
-
-    // Auto-assign room if not provided
-    if (ChiTietDatPhong.length === 0) {
-      const room = await findAvailableRoom(HangPhong, start, end);
-      if (room) {
-        ChiTietDatPhong = [{
-          MaCTDP: `CTDP${Date.now()}`,
-          Phong: room._id
-        }];
-      } else {
-        return res.status(400).json({ 
-          message: `Không còn phòng trống cho hạng ${HangPhong} trong khoảng thời gian này` 
-        });
-      }
-    }
-
-    const datPhong = await DatPhong.create({
-      MaDatPhong,
-      KhachHang,
-      HangPhong,
-      NgayDen: start,
-      NgayDi: end,
-      SoKhach,
-      TienCoc: TienCoc || 0,
-      ChiTietDatPhong,
-      TrangThai: 'Pending'
-    });
-
-    res.json(datPhong);
-  } catch (err) { next(err); }
+    next(err);
+  }
 };
 
 exports.createWalkIn = async (req, res, next) => {
   try {
-    const { 
-      // Booking info
-      MaDatPhong, HangPhong, NgayDen, NgayDi, SoKhach, TienCoc, ChiTietDatPhong,
-      // Guest info
-      HoTen, CMND, SDT, Email
-    } = req.body;
-
-    if (!HoTen || !CMND || !SDT || !HangPhong || !NgayDen || !NgayDi || !SoKhach) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    const result = await bookingService.createWalkIn(req.body);
+    res.json(result);
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ message: err.message });
     }
-
-    // 1. Find or Create Customer
-    let customer = await KhachHang.findOne({ 
-        $or: [{ CMND: CMND }, { Email: Email }] 
-    });
-
-    if (!customer) {
-        // Generate MaKH if not provided (simple logic or use a counter in real app)
-        const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-        const MaKH = `KH${randomSuffix}`;
-        
-        customer = await KhachHang.create({
-            MaKH,
-            HoTen,
-            CMND,
-            SDT,
-            Email,
-            TaiKhoan: null // Walk-in guest has no account
-        });
-    }
-
-    // 2. Create Booking
-    const start = new Date(NgayDen);
-    const end = new Date(NgayDi);
-    if (start >= end) return res.status(400).json({ message: 'Invalid dates' });
-
-    // Check availability
-    // Check availability - REMOVED incorrect global check
-    // Rely on room availability check below
-    // Check availability: Existing logic assumes we check available rooms later using findAvailableRoom
-
-    let finalChiTiet = ChiTietDatPhong || [];
-    if (finalChiTiet.length === 0) {
-        const room = await findAvailableRoom(HangPhong, start, end);
-        if (!room) {
-            return res.status(400).json({ message: `Không còn phòng trống cho hạng ${HangPhong}` });
-        }
-        finalChiTiet = [{
-            MaCTDP: `CTDP${Date.now()}`,
-            Phong: room._id
-        }];
-    }
-
-    // Auto-generate MaDatPhong if missing
-    if (!MaDatPhong) {
-        const lastBooking = await DatPhong.findOne().sort({ MaDatPhong: -1 });
-        let nextId = 1;
-        if (lastBooking && lastBooking.MaDatPhong) {
-            const match = lastBooking.MaDatPhong.match(/DP(\d+)/);
-            if (match) {
-                nextId = parseInt(match[1], 10) + 1;
-            }
-        }
-        MaDatPhong = `DP${String(nextId).padStart(3, '0')}`;
-    }
-
-    const datPhong = await DatPhong.create({
-      MaDatPhong,
-      KhachHang: customer._id,
-      HangPhong,
-      NgayDen: start,
-      NgayDi: end,
-      SoKhach,
-      TienCoc: TienCoc || 0,
-      ChiTietDatPhong: finalChiTiet,
-      TrangThai: 'Pending'
-    });
-
-    res.json(datPhong);
-  } catch (err) { next(err); }
+    next(err);
+  }
 };
 
 exports.getAll = async (req, res, next) => {
@@ -249,7 +85,7 @@ exports.update = async (req, res, next) => {
          
          if (!updateData.ChiTietDatPhong && (!current.ChiTietDatPhong || current.ChiTietDatPhong.length === 0)) {
              // Case 1: No room assigned yet. Find one.
-             const room = await findAvailableRoom(hp, start, end, current._id); // We need to handle excludeId
+             const room = await bookingService.findAvailableRoom(hp, start, end, current._id); // We need to handle excludeId
              if (room) {
                 updateData.ChiTietDatPhong = [{
                     MaCTDP: `CTDP${Date.now()}`,
