@@ -45,6 +45,7 @@ export default function CustomerPayment() {
         // 1. Get Customer to know ID
         const customers = await customerApi.getCustomers();
         const customer = customers.find(c => {
+          if (!c.TaiKhoan) return false;
           const taiKhoanId = typeof c.TaiKhoan === 'object' ? c.TaiKhoan._id : c.TaiKhoan;
           return taiKhoanId === decoded.id;
         });
@@ -55,11 +56,9 @@ export default function CustomerPayment() {
           setBookings(bookingRes.data || bookingRes || []);
 
           // 3. Fetch Invoices (and filter by customer)
-          // Note: In real app, expect an endpoint /invoices/customer/:id
           try {
             const invoiceRes = await invoiceApi.getInvoices();
             const allInvoices = invoiceRes.data || invoiceRes || [];
-            // Filter where KhachHang._id == customer._id
             const myInvoices = allInvoices.filter(inv => {
               const invCustId = typeof inv.KhachHang === 'object' ? inv.KhachHang._id : inv.KhachHang;
               return invCustId === customer._id;
@@ -71,6 +70,11 @@ export default function CustomerPayment() {
         }
       } catch (error) {
         console.error("Error fetching payment data:", error);
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải thông tin thanh toán",
+          variant: "destructive"
+        });
       } finally {
         setLoading(false);
       }

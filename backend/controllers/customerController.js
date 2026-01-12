@@ -2,7 +2,7 @@ const KhachHang = require('../models/KhachHang');
 
 exports.create = async (req, res, next) => {
   try {
-    let { MaKH, HoTen, CMND, SDT, Email } = req.body;
+    let { MaKH, HoTen, CMND, SDT, Email, DiaChi } = req.body;
     
     if (!HoTen || !CMND || !SDT || !Email) {
       return res.status(400).json({ message: 'All customer fields are required' });
@@ -27,6 +27,7 @@ exports.create = async (req, res, next) => {
       CMND,
       SDT,
       Email,
+      DiaChi,
       ...(req.body.TaiKhoan ? { TaiKhoan: req.body.TaiKhoan } : {})
     });
 

@@ -39,12 +39,14 @@ export default function CustomerProfile() {
 
         const customers = await customerApi.getCustomers();
         const found = customers.find(c => {
+          if (!c.TaiKhoan) return false;
           const taiKhoanId = typeof c.TaiKhoan === 'object' ? c.TaiKhoan._id : c.TaiKhoan;
           return taiKhoanId === decoded.id;
         });
 
         if (found) {
           setCustomer(found);
+          localStorage.setItem("customerName", found.HoTen);
           setFormData({
             name: found.HoTen || "",
             email: found.Email || "",
@@ -52,6 +54,8 @@ export default function CustomerProfile() {
             idNumber: found.CMND || "",
             address: found.DiaChi || "",
           });
+        } else {
+          toast({ title: "Thông báo", description: "Không tìm thấy hồ sơ cá nhân cho tài khoản này", variant: "destructive" });
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -80,6 +84,7 @@ export default function CustomerProfile() {
         CMND: formData.idNumber,
         DiaChi: formData.address
       });
+      localStorage.setItem("customerName", formData.name);
       toast({ title: "Thành công", description: "Đã cập nhật thông tin cá nhân" });
     } catch (error) {
       toast({ title: "Lỗi", description: error.message, variant: "destructive" });

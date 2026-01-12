@@ -93,39 +93,71 @@ export default function CustomerServices() {
         // 1. Get Customer
         const customers = await customerApi.getCustomers();
         const customer = customers.find((c) => {
+          if (!c.TaiKhoan) return false;
           const taiKhoanId =
             typeof c.TaiKhoan === "object" ? c.TaiKhoan._id : c.TaiKhoan;
           return taiKhoanId === decoded.id;
         });
 
-        if (!customer) return;
+        if (!customer) {
+          console.warn("No customer profile found for account:", decoded.id);
+          setLoading(false);
+          return;
+        }
 
         // 2. Fetch Available Services
         const servicesData = await serviceApi.getServices();
         setServices(servicesData || []);
 
-        // 3. Fetch My Bookings (Active only for dropdown)
-        const bookingsData = await datPhongApi.getBookingsByCustomerId(
-          customer._id
-        );
+        // 3. Fetch My Bookings
+        const bookingsData = await datPhongApi.getBookingsByCustomerId(customer._id);
         const bookings = bookingsData.data || bookingsData || [];
-        const active = bookings.filter((b) => b.TrangThai === "CheckedIn");
+        
+        // Find bookings that are already marked as CheckedIn
+        let active = bookings.filter((b) => b.TrangThai === "CheckedIn");
+        
+        // 4. Try to find other active stays via Rental Receipts (PTP)
+        // Wrapped in try-catch because this endpoint might be restricted for Customers
+        try {
+          const ptpRes = await rentalReceiptApi.getRentalReceipts();
+          const allPtps = ptpRes.data || ptpRes || [];
+          
+          const activeStayBookingIds = allPtps
+            .filter(ptp => ptp.TrangThai === 'CheckedIn')
+            .map(ptp => {
+               const dpId = ptp.DatPhong && typeof ptp.DatPhong === 'object' ? ptp.DatPhong._id : ptp.DatPhong;
+               return dpId;
+            });
+
+          // Add any missing bookings that have a CheckedIn PTP
+          bookings.forEach(b => {
+            if (!active.some(a => a._id === b._id) && activeStayBookingIds.includes(b._id)) {
+              active.push(b);
+            }
+          });
+        } catch (ptpErr) {
+          console.warn("Could not fetch rental receipts for extra stay check:", ptpErr.message);
+        }
+        
         setMyBookings(active);
 
-        // 4. Fetch My Requests (All history)
-        const allUsagesReq = await serviceUsageApi.getServiceUsages();
-        const allUsages = allUsagesReq.data || allUsagesReq || [];
+        // 5. Fetch My Requests (All history) - Also wrapped
+        try {
+          const allUsagesReq = await serviceUsageApi.getServiceUsages();
+          const allUsages = allUsagesReq.data || allUsagesReq || [];
+          const allCustomerBookingIds = bookings.map((b) => b._id);
 
-        const allCustomerBookingIds = bookings.map((b) => b._id);
-
-        const customerUsages = allUsages.filter((usage) => {
-          const bookingId = usage.PhieuThuePhong?.DatPhong;
-          const idStr =
-            typeof bookingId === "object" ? bookingId._id : bookingId;
-          return allCustomerBookingIds.includes(idStr);
-        });
-
-        setMyRequests(customerUsages);
+          const customerUsages = allUsages.filter((usage) => {
+            if (!usage.PhieuThuePhong) return false;
+            // usage.PhieuThuePhong.DatPhong might be ID or populated object
+            const bookingId = usage.PhieuThuePhong.DatPhong;
+            const idStr = typeof bookingId === "object" ? bookingId?._id : bookingId;
+            return allCustomerBookingIds.includes(idStr);
+          });
+          setMyRequests(customerUsages);
+        } catch (usageErr) {
+          console.warn("Could not fetch service usage history:", usageErr.message);
+        }
       } catch (error) {
         console.error("Error loading services data:", error);
       } finally {

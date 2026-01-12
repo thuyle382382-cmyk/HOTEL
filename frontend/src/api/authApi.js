@@ -12,7 +12,8 @@ const register = async (
   HoTen,
   CMND,
   SDT,
-  Email
+  Email,
+  DiaChi
 ) => {
   try {
     const res = await fetch(`${API_URL}/register`, {
@@ -26,6 +27,7 @@ const register = async (
         CMND,
         SDT,
         Email,
+        DiaChi,
       }),
     });
     if (!res.ok) {
@@ -65,6 +67,42 @@ const login = async (TenDangNhap, MatKhau) => {
   }
 };
 
+const forgotPassword = async (Email) => {
+  try {
+    const res = await fetch(`${API_URL}/forgot-password`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ Email }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || err.error || "Failed to send reset email");
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("Error in forgotPassword:", err);
+    throw err;
+  }
+};
+
+const resetPasswordWithOTP = async (Email, OTP, MatKhau) => {
+  try {
+    const res = await fetch(`${API_URL}/reset-password-otp`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ Email, OTP, MatKhau }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || err.error || "Failed to reset password");
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("Error in resetPasswordWithOTP:", err);
+    throw err;
+  }
+};
+
 const logout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("vaiTro");
@@ -76,4 +114,13 @@ const getRole = () => localStorage.getItem("vaiTro");
 
 const isLoggedIn = () => !!getToken();
 
-export default { register, login, logout, getToken, getRole, isLoggedIn };
+export default {
+  register,
+  login,
+  forgotPassword,
+  resetPasswordWithOTP,
+  logout,
+  getToken,
+  getRole,
+  isLoggedIn,
+};

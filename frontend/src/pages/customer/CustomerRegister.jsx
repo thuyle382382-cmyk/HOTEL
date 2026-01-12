@@ -64,7 +64,8 @@ export default function CustomerRegister() {
         formData.name, // HoTen
         formData.idNumber, // CMND
         formData.phone, // SDT
-        formData.email // Email
+        formData.email, // Email
+        formData.address // DiaChi
       );
 
       toast({

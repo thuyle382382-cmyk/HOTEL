@@ -46,6 +46,7 @@ export default function CustomerDashboard() {
         // 1. Get Customer Info
         const customers = await customerApi.getCustomers();
         const foundCustomer = customers.find(c => {
+          if (!c.TaiKhoan) return false;
           const taiKhoanId = typeof c.TaiKhoan === 'object' ? c.TaiKhoan._id : c.TaiKhoan;
           return taiKhoanId === decoded.id;
         });
@@ -53,6 +54,7 @@ export default function CustomerDashboard() {
         if (foundCustomer) {
           setCustomer(foundCustomer);
           localStorage.setItem("customerId", foundCustomer._id);
+          localStorage.setItem("customerName", foundCustomer.HoTen);
 
           // 2. Get Bookings
           const bookingsRes = await datPhongApi.getBookingsByCustomerId(foundCustomer._id);

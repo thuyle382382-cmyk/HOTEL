@@ -88,19 +88,78 @@ export default function Login() {
     }
   };
 
-  const handleForgotPassword = () => {
-    if (resetEmail) {
-      toast({
-        title: "Yêu cầu đã được gửi",
-        description: "Vui lòng kiểm tra email để đặt lại mật khẩu",
-      });
-      setIsForgotPasswordOpen(false);
-      setResetEmail("");
-    } else {
+  const [resetStep, setResetStep] = useState(1); // 1: Email, 2: OTP & New Password
+  const [resetOTP, setResetOTP] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+
+  const handleForgotPassword = async () => {
+    if (!resetEmail) {
       toast({
         title: "Vui lòng nhập email",
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await authApi.forgotPassword(resetEmail);
+      toast({
+        title: "Mã OTP đã được gửi",
+        description: "Vui lòng kiểm tra email để lấy mã xác thực (Nếu trong môi trường dev, kiểm tra console log ở backend)",
+      });
+      setResetStep(2);
+    } catch (error) {
+      toast({
+        title: "Gửi yêu cầu thất bại",
+        description: error.message || "Đã có lỗi xảy ra",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetOTP || !newPassword || !confirmNewPassword) {
+      toast({
+        title: "Vui lòng điền đầy đủ thông tin",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: "Mật khẩu không khớp",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await authApi.resetPasswordWithOTP(resetEmail, resetOTP, newPassword);
+      toast({
+        title: "Thành công",
+        description: "Mật khẩu của bạn đã được thay đổi",
+      });
+      setIsForgotPasswordOpen(false);
+      // Reset states
+      setResetStep(1);
+      setResetEmail("");
+      setResetOTP("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (error) {
+      toast({
+        title: "Đặt lại mật khẩu thất bại",
+        description: error.message || "Mã OTP không đúng hoặc đã hết hạn",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -218,35 +277,108 @@ export default function Login() {
 
       <Dialog
         open={isForgotPasswordOpen}
-        onOpenChange={setIsForgotPasswordOpen}
+        onOpenChange={(open) => {
+          setIsForgotPasswordOpen(open);
+          if (!open) {
+            setResetStep(1);
+            setResetEmail("");
+            setResetOTP("");
+            setNewPassword("");
+            setConfirmNewPassword("");
+          }
+        }}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Quên mật khẩu</DialogTitle>
             <DialogDescription>
-              Nhập email của bạn để nhận liên kết đặt lại mật khẩu
+              {resetStep === 1
+                ? "Nhập email của bạn để nhận mã OTP đặt lại mật khẩu"
+                : "Nhập mã OTP đã nhận được và mật khẩu mới của bạn"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-email">Email</Label>
-              <Input
-                id="reset-email"
-                type="email"
-                placeholder="example@hotel.com"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-              />
-            </div>
+            {resetStep === 1 ? (
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="example@hotel.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-otp">Mã xác thực (OTP)</Label>
+                  <Input
+                    id="reset-otp"
+                    placeholder="Nhập 6 số"
+                    value={resetOTP}
+                    onChange={(e) => setResetOTP(e.target.value)}
+                    disabled={isLoading}
+                    maxLength={6}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">Mật khẩu mới</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="Nhập mật khẩu mới"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-new-password">Xác nhận mật khẩu</Label>
+                  <Input
+                    id="confirm-new-password"
+                    type="password"
+                    placeholder="Xác nhận lại mật khẩu"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setIsForgotPasswordOpen(false)}
+              disabled={isLoading}
             >
               Hủy
             </Button>
-            <Button onClick={handleForgotPassword}>Gửi yêu cầu</Button>
+            {resetStep === 1 ? (
+              <Button onClick={handleForgotPassword} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang gửi...
+                  </>
+                ) : (
+                  "Gửi mã OTP"
+                )}
+              </Button>
+            ) : (
+              <Button onClick={handleResetPassword} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  "Đặt lại mật khẩu"
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -46,6 +46,7 @@ export default function CustomerMyBookings() {
         // Find customer by account ID
         const customers = await customerApi.getCustomers();
         const customer = customers.find(c => {
+          if (!c.TaiKhoan) return false;
           const taiKhoanId = typeof c.TaiKhoan === 'object' ? c.TaiKhoan._id : c.TaiKhoan;
           return taiKhoanId === decoded.id;
         });

@@ -11,7 +11,8 @@ const KhachHangSchema = new mongoose.Schema({
     HoTen: { type: String, required: true },
     CMND: { type: String, required: true, unique: true },
     SDT: { type: String, required: true },
-    Email: { type: String, required: true, unique: true }
+    Email: { type: String, required: true, unique: true },
+    DiaChi: { type: String }
 }, { timestamps: true });
 
 module.exports = mongoose.model('KhachHang', KhachHangSchema);

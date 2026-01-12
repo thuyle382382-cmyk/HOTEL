@@ -7,7 +7,9 @@ const TaiKhoanSchema = new mongoose.Schema({
         type: String,
         enum: ["Admin", "Manager", "Receptionist", "MaintenanceStaff", "Customer"], 
         required: true 
-    }
+    },
+    resetOTP: String,
+    resetOTPExpires: Date
 }, { timestamps: true });
 
 module.exports = mongoose.model('TaiKhoan', TaiKhoanSchema);
