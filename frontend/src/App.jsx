@@ -3,12 +3,17 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 import { AppLayout } from "./components/AppLayout";
 import { CustomerLayout } from "./components/CustomerLayout";
 
+
 // Pages
 import Login from "./pages/Login";
+
 
 // Admin pages
 import Dashboard from "./pages/Dashboard";
@@ -22,6 +27,8 @@ import Settings from "./pages/Settings";
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import Maintenance from "./pages/Maintenance";
+import Calendar from "./pages/Calendar";
+
 
 // Customer pages
 import CustomerRegister from "./pages/customer/CustomerRegister";
@@ -33,7 +40,9 @@ import CustomerPayment from "./pages/customer/CustomerPayment";
 import CustomerHistory from "./pages/customer/CustomerHistory";
 import CustomerProfile from "./pages/customer/CustomerProfile";
 
+
 const queryClient = new QueryClient();
+
 
 /* =======================
    PROTECTED ROUTE (ROLE)
@@ -42,14 +51,18 @@ const ProtectedRoute = ({ children, allowRoles }) => {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
 
+
   if (!token) return <Navigate to="/login" replace />;
+
 
   if (allowRoles && !allowRoles.includes(role)) {
     return <Navigate to="/" replace />;
   }
 
+
   return children;
 };
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -61,8 +74,10 @@ const App = () => (
           {/* ===== LOGIN ===== */}
           <Route path="/login" element={<Login />} />
 
+
           {/* ===== ADMIN ===== */}
           <Route path="/" element={<Navigate to="/login" replace />} />
+
 
           <Route
             path="/dashboard"
@@ -81,6 +96,7 @@ const App = () => (
             }
           />
 
+
           <Route
             path="/rooms"
             element={
@@ -91,6 +107,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
 
           <Route
             path="/bookings"
@@ -103,6 +120,19 @@ const App = () => (
             }
           />
 
+
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute allowRoles={["Admin", "Manager", "Receptionist"]}>
+                <AppLayout>
+                  <Calendar />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+
           <Route
             path="/guests"
             element={
@@ -113,6 +143,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
 
           <Route
             path="/invoices"
@@ -125,6 +156,7 @@ const App = () => (
             }
           />
 
+
           <Route
             path="/services"
             element={
@@ -135,6 +167,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
 
           <Route
             path="/maintenance"
@@ -147,6 +180,7 @@ const App = () => (
             }
           />
 
+
           <Route
             path="/staff"
             element={
@@ -157,6 +191,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
 
           <Route
             path="/settings"
@@ -169,6 +204,7 @@ const App = () => (
             }
           />
 
+
           <Route
             path="/reports"
             element={
@@ -179,6 +215,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
 
           <Route
             path="/profile"
@@ -197,8 +234,10 @@ const App = () => (
             }
           />
 
+
           {/* ===== CUSTOMER ===== */}
           <Route path="/customer/register" element={<CustomerRegister />} />
+
 
           <Route
             path="/customer"
@@ -210,6 +249,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
 
           <Route
             path="/customer/booking"
@@ -272,12 +312,18 @@ const App = () => (
             }
           />
 
+
           {/* ===== FALLBACK ===== */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
+      <ToastContainer position="top-right" autoClose={5000} />
     </TooltipProvider>
   </QueryClientProvider>
 );
 
+
 export default App;
+
+
+
