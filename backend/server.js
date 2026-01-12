@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const customerRoutes = require('./routes/customerRoutes');
@@ -23,9 +24,12 @@ const serviceUsageHistoryRoutes = require('./routes/serviceUsageHistoryRoutes');
 const datPhongRoutes = require('./routes/datPhongRoutes');
 const roomTypeRoutes = require('./routes/roomTypeRoutes');
 const settingRoutes = require('./routes/settingRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
+
 
 // Import models (for schema registration)
 const TaiKhoan = require('./models/TaiKhoan');
@@ -44,9 +48,11 @@ const LichSuDatPhong = require('./models/LichSuDatPhong');
 const LichSuSuDungDichVu = require('./models/LichSuSuDungDichVu');
 const PhieuBaoTri = require('./models/PhieuBaoTri');
 
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
 
 // MongoDB connection
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://hotel:anh382382@hotel.qi1ejpi.mongodb.net/test';
@@ -58,6 +64,7 @@ mongoose.connect(MONGO_URI, {
 }).catch(err => {
   console.error('MongoDB connection error:', err);
 });
+
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -79,9 +86,12 @@ app.use('/api/service-usage-history', authMiddleware, serviceUsageHistoryRoutes)
 app.use('/api/dat-phong', authMiddleware, datPhongRoutes);
 app.use('/api/room-types', authMiddleware, roomTypeRoutes);
 app.use('/api/settings', authMiddleware, settingRoutes);
+app.use('/api/notifications', notificationRoutes);
+
 
 // Health route
 app.get('/api/health', (req, res) => res.json({ ok: true }));
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -89,12 +99,17 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Something went wrong!' });
 });
 
+
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
 }
 
+
 module.exports = app;
+
+
+
