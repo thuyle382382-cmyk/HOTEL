@@ -1,4 +1,5 @@
 const PhieuBaoTri = require("../models/PhieuBaoTri");
+const DatPhong = require("../models/DatPhong");
 
 // Get all maintenance records
 exports.getAllMaintenanceRecords = async (req, res) => {
@@ -74,6 +75,30 @@ exports.createMaintenanceRecord = async (req, res) => {
         success: false,
         message: "Mã phiếu bảo trì đã tồn tại",
       });
+    }
+
+    // Check for active booking overlap
+    // Find active booking for this room: CheckedIn
+    const activeBooking = await DatPhong.findOne({
+        "ChiTietDatPhong.Phong": Phong,
+        TrangThai: "CheckedIn"
+    });
+
+    if (activeBooking) {
+        const bookingEndDate = new Date(activeBooking.NgayDi);
+        // Normalize to YYYY-MM-DD for comparison to ignore time
+        const maintenanceStartDate = new Date(NgayThucHien);
+        
+        // Reset hours to compare dates only
+        bookingEndDate.setHours(0,0,0,0);
+        maintenanceStartDate.setHours(0,0,0,0);
+
+        if (maintenanceStartDate < bookingEndDate) {
+             return res.status(400).json({
+                success: false,
+                message: `Phòng đang có khách. Ngày bảo trì phải từ ngày ${activeBooking.NgayDi.toISOString().split('T')[0]} trở đi.`,
+            });
+        }
     }
 
     const record = new PhieuBaoTri({

@@ -136,14 +136,12 @@ export default function Maintenance() {
       if (bookingByRoom) {
         const ngayDi = formatDate(bookingByRoom.NgayDi);
         console.log("ngayDi", ngayDi);
-        // ÉP ngày thực hiện = ngày đi
-        formData.NgayThucHien = ngayDi;
-
-        // CHẶN nếu user cố sửa
-        if (formData.NgayThucHien !== ngayDi) {
+        
+        // Validate date must be >= ngayDi
+        if (formData.NgayThucHien < ngayDi) {
           toast({
             title: "Ngày thực hiện không hợp lệ",
-            description: "Phòng đã được đặt, ngày thực hiện phải bằng ngày đi",
+            description: `Phòng đang có khách, ngày thực hiện phải từ ngày ${ngayDi} trở đi`,
             variant: "destructive",
           });
           return;
@@ -229,10 +227,10 @@ export default function Maintenance() {
     });
   };
   const addOneDay = (date) => {
-    if (!date) return ""; // ⛔ chặn null / undefined
+    if (!date) return ""; // chặn null / undefined
 
     const d = new Date(date);
-    if (isNaN(d.getTime())) return ""; // ⛔ chặn invalid date
+    if (isNaN(d.getTime())) return ""; // chặn invalid date
 
     d.setDate(d.getDate() + 1);
     return d.toISOString().split("T")[0];
@@ -480,7 +478,7 @@ export default function Maintenance() {
                   setFormData({
                     ...formData,
                     Phong: v,
-                    NgayThucHien: isBooked
+                    NgayThucHien: isBooked && (!formData.NgayThucHien || formData.NgayThucHien < checkOutDate)
                       ? checkOutDate
                       : formData.NgayThucHien,
                   });
@@ -532,21 +530,24 @@ export default function Maintenance() {
                   onChange={(e) =>
                     setFormData({ ...formData, NgayThucHien: e.target.value })
                   }
-                  disabled={
+                  disabled={false}
+                  min={
                     formData.Phong &&
                     getRoomBookingStatus(formData.Phong).isBooked
+                      ? formatDate(getRoomBookingStatus(formData.Phong).checkOutDate)
+                      : undefined
                   }
                   title={
                     formData.Phong &&
                     getRoomBookingStatus(formData.Phong).isBooked
-                      ? "Phòng đã được đặt, ngày được tự động đặt theo ngày đi"
+                      ? "Phòng đang có khách, vui lòng chọn ngày sau khi khách trả phòng"
                       : ""
                   }
                 />
                 {formData.Phong &&
                   getRoomBookingStatus(formData.Phong).isBooked && (
                     <p className="text-xs text-amber-600">
-                      ⚠️ Phòng đã được đặt - Ngày tự động = Ngày đi
+                      ⚠️ Phòng đang có khách - Ngày bảo trì phải từ ngày khách đi trở đi
                     </p>
                   )}
               </div>
