@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { AppLayout } from "./components/AppLayout";
 import { CustomerLayout } from "./components/CustomerLayout";
+import ChatBot from "./components/ChatBot";
 
 
 // Pages
