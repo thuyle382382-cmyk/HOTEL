@@ -13,8 +13,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { datPhongApi, customerApi, serviceUsageApi, rentalReceiptApi } from "@/api";
 import { toast } from "@/hooks/use-toast";
-import Notifications from "@/components/Notifications";
-import MaintenanceRequest from "@/components/MaintenanceRequest";
+import Notifications from "@/components/Notification";
+import MaintenanceRequest from "@/components/MaintainanceRequest";
 
 
 // Helper to decode JWT
