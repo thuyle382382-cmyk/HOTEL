@@ -306,6 +306,166 @@ export default function Reports() {
     XLSX.writeFile(wb, "Bao_cao_khach_hang.xlsx");
   };
 
+  // Function to check if a name is Vietnamese (contains Vietnamese diacritics)
+  const isVietnameseName = (name) => {
+    if (!name || typeof name !== 'string') return false;
+    
+    // Vietnamese diacritics: àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ
+    // Also check for common Vietnamese name patterns
+    const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸ]/;
+    
+    return vietnamesePattern.test(name);
+  };
+
+  const exportDomesticInternationalReport = () => {
+    if (!bookings.length && !invoices.length) {
+      toast({ title: "Không có dữ liệu để thống kê" });
+      return;
+    }
+
+    // Collect unique customers from bookings
+    const customerMap = {};
+    const customerRevenueMap = {};
+
+    // Process bookings to get customer list
+    bookings.forEach((b) => {
+      const kh = b.KhachHang || b.customer;
+      if (!kh) return;
+
+      const customerId = kh._id || kh.id || kh.MaKH || "unknown";
+      const customerName = kh.HoTen || kh.TenKH || "Khách vãng lai";
+
+      if (!customerMap[customerId]) {
+        customerMap[customerId] = {
+          customerId: customerId,
+          customerName: customerName,
+          isVietnamese: isVietnameseName(customerName),
+        };
+        customerRevenueMap[customerId] = 0;
+      }
+    });
+
+    // Process invoices to calculate revenue
+    invoices.forEach((inv) => {
+      const kh = inv.KhachHang;
+      if (kh) {
+        const kID = typeof kh === "object" ? (kh._id || kh.id) : kh;
+        const revenue = inv.TongThanhToan || inv.TongTien || inv.total || 0;
+        
+        if (customerRevenueMap[kID] !== undefined) {
+          customerRevenueMap[kID] += revenue;
+        } else {
+          // Customer might not be in bookings but has invoice
+          const customerName = typeof kh === "object" 
+            ? (kh.HoTen || kh.TenKH || "Khách vãng lai")
+            : "Khách vãng lai";
+          
+          if (!customerMap[kID]) {
+            customerMap[kID] = {
+              customerId: kID,
+              customerName: customerName,
+              isVietnamese: isVietnameseName(customerName),
+            };
+            customerRevenueMap[kID] = 0;
+          }
+          customerRevenueMap[kID] += revenue;
+        }
+      }
+    });
+
+    // Calculate statistics and collect customer names with revenue
+    let domesticCount = 0;
+    let internationalCount = 0;
+    let domesticRevenue = 0;
+    let internationalRevenue = 0;
+    const domesticCustomers = [];
+    const internationalCustomers = [];
+    const domesticCustomerDetails = []; // Store name and revenue for each customer
+    const internationalCustomerDetails = []; // Store name and revenue for each customer
+
+    Object.values(customerMap).forEach((customer) => {
+      const revenue = customerRevenueMap[customer.customerId] || 0;
+      
+      if (customer.isVietnamese) {
+        domesticCount++;
+        domesticRevenue += revenue;
+        domesticCustomers.push(customer.customerName);
+        domesticCustomerDetails.push({
+          name: customer.customerName,
+          revenue: revenue
+        });
+      } else {
+        internationalCount++;
+        internationalRevenue += revenue;
+        internationalCustomers.push(customer.customerName);
+        internationalCustomerDetails.push({
+          name: customer.customerName,
+          revenue: revenue
+        });
+      }
+    });
+
+    // Calculate average revenue per customer for each group
+    const avgDomesticRevenue = domesticCount > 0 ? domesticRevenue / domesticCount : 0;
+    const avgInternationalRevenue = internationalCount > 0 ? internationalRevenue / internationalCount : 0;
+    const totalRevenue = domesticRevenue + internationalRevenue;
+    const totalCount = domesticCount + internationalCount;
+    const avgTotalRevenue = totalCount > 0 ? totalRevenue / totalCount : 0;
+
+    // Prepare Excel data with customer names and revenue details
+    const data = [
+      {
+        "Loại khách": "Khách nội địa",
+        "Số lượng": domesticCount,
+        "Danh sách khách hàng": domesticCustomers.join(", "),
+        "Doanh thu trung bình/người (VNĐ)": Math.round(avgDomesticRevenue),
+        "Tổng doanh thu nhóm (VNĐ)": domesticRevenue,
+      },
+      {
+        "Loại khách": "Khách quốc tế",
+        "Số lượng": internationalCount,
+        "Danh sách khách hàng": internationalCustomers.join(", "),
+        "Doanh thu trung bình/người (VNĐ)": Math.round(avgInternationalRevenue),
+        "Tổng doanh thu nhóm (VNĐ)": internationalRevenue,
+      },
+      {
+        "Loại khách": "TỔNG CỘNG",
+        "Số lượng": totalCount,
+        "Danh sách khách hàng": "",
+        "Doanh thu trung bình/người (VNĐ)": Math.round(avgTotalRevenue),
+        "Tổng doanh thu nhóm (VNĐ)": totalRevenue,
+      },
+    ];
+
+    // Add detailed customer list
+    const detailData = Object.values(customerMap)
+      .map((customer) => ({
+        "Mã khách hàng": customer.customerId,
+        "Tên khách hàng": customer.customerName,
+        "Loại": customer.isVietnamese ? "Nội địa" : "Quốc tế",
+        "Doanh thu (VNĐ)": customerRevenueMap[customer.customerId] || 0,
+      }))
+      .sort((a, b) => b["Doanh thu (VNĐ)"] - a["Doanh thu (VNĐ)"]);
+
+    // Create workbook with multiple sheets
+    const wb = XLSX.utils.book_new();
+    
+    // Summary sheet
+    const ws1 = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws1, "Tong_ket");
+    
+    // Detail sheet
+    const ws2 = XLSX.utils.json_to_sheet(detailData);
+    XLSX.utils.book_append_sheet(wb, ws2, "Chi_tiet");
+
+    XLSX.writeFile(wb, "Bao_cao_khach_noi_dia_quoc_te.xlsx");
+    
+    toast({
+      title: "Thành công",
+      description: "Đã xuất báo cáo thống kê khách nội địa/quốc tế",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -433,6 +593,21 @@ export default function Reports() {
             <Button className="w-full gap-2" onClick={exportCustomerReport}>
               <Download className="h-4 w-4" />
               Xuất báo cáo khách hàng
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Thống kê khách nội địa / quốc tế</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Thống kê số lượng và doanh thu của khách nội địa (tên tiếng Việt) và khách quốc tế
+            </p>
+            <Button className="w-full gap-2" onClick={exportDomesticInternationalReport}>
+              <Download className="h-4 w-4" />
+              Xuất báo cáo khách nội địa/quốc tế
             </Button>
           </CardContent>
         </Card>
