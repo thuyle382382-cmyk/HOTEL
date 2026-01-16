@@ -33,6 +33,8 @@ import Calendar from "./pages/Calendar";
 
 // Customer pages
 import CustomerRegister from "./pages/customer/CustomerRegister";
+import NeighborhoodGuide from "./components/NeighborhoodGuide";
+import RoomExtensionRequest from "./components/RoomExtensionRequest";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
 import CustomerBooking from "./pages/customer/CustomerBooking";
 import CustomerMyBookings from "./pages/customer/CustomerMyBookings";
@@ -330,6 +332,26 @@ const App = () => (
               <ProtectedRoute allowRoles={["Customer"]}>
                 <CustomerLayout>
                   <CustomerProfile />
+                </CustomerLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/guide"
+            element={
+              <ProtectedRoute allowRoles={["Customer"]}>
+                <CustomerLayout>
+                  <NeighborhoodGuide />
+                </CustomerLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/room-extension"
+            element={
+              <ProtectedRoute allowRoles={["Customer"]}>
+                <CustomerLayout>
+                  <RoomExtensionRequest />
                 </CustomerLayout>
               </ProtectedRoute>
             }
