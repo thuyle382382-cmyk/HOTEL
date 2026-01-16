@@ -1,17 +1,21 @@
 const mongoose = require("mongoose");
 
-const PhieuBaoTriSchema = new mongoose.Schema(
-  {
+
+const PhieuBaoTriSchema = new mongoose.Schema({
     MaPBT: { type: String, required: true, unique: true },
     Phong: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Phong",
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Phong',
+        required: true
+    },
+    KhachHang: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'KhachHang',
+        required: true
     },
     NVKyThuat: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "NhanVien",
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'NhanVien'
     },
     NoiDung: { type: String, required: true },
     NgayThucHien: { type: Date, default: Date.now },

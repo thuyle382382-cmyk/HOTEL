@@ -7,6 +7,7 @@ import { CustomerSidebar } from "./CustomerSidebar";
 import { Bell, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import ChatBot from "./ChatBot";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +66,7 @@ export function CustomerLayout({ children }) {
           </div>
         </header>
         <main className="flex-1 p-6 bg-background">{children}</main>
+        <ChatBot />
       </SidebarInset>
     </SidebarProvider>
   );

@@ -13,6 +13,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import { datPhongApi, customerApi, serviceUsageApi, rentalReceiptApi } from "@/api";
 import { toast } from "@/hooks/use-toast";
+import Notifications from "@/components/Notification";
+import MaintenanceRequest from "@/components/MaintainanceRequest";
+
 
 // Helper to decode JWT
 const parseJwt = (token) => {
@@ -23,12 +26,14 @@ const parseJwt = (token) => {
   }
 };
 
+
 export default function CustomerDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [requests, setRequests] = useState([]);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,8 +45,10 @@ export default function CustomerDashboard() {
           return;
         }
 
+
         const decoded = parseJwt(token);
         if (!decoded?.id) return;
+
 
         // 1. Get Customer Info
         const customers = await customerApi.getCustomers();
@@ -51,26 +58,32 @@ export default function CustomerDashboard() {
           return taiKhoanId === decoded.id;
         });
 
+
         if (foundCustomer) {
           setCustomer(foundCustomer);
           localStorage.setItem("customerId", foundCustomer._id);
           localStorage.setItem("customerName", foundCustomer.HoTen);
+
 
           // 2. Get Bookings
           const bookingsRes = await datPhongApi.getBookingsByCustomerId(foundCustomer._id);
           const bookingsData = bookingsRes.data || bookingsRes || [];
           setBookings(bookingsData);
 
+
           // 3. Get Service Requests (complex filtering)
           // Fetch all usages
           const allUsagesRes = await serviceUsageApi.getServiceUsages();
           const allUsages = allUsagesRes.data || allUsagesRes || [];
 
+
           // Fetch all rental receipts to map to bookings
           const ptpsRes = await rentalReceiptApi.getRentalReceipts();
           const ptps = Array.isArray(ptpsRes) ? ptpsRes : (ptpsRes.data || []);
 
+
           const customerBookingIds = bookingsData.map(b => b._id);
+
 
           // Filter usages belonging to customer's bookings
           const customerUsages = allUsages.filter(usage => {
@@ -80,12 +93,15 @@ export default function CustomerDashboard() {
             const ptp = ptps.find(p => p._id === ptpId);
             if (!ptp) return false;
 
+
             const bookingId = typeof ptp.DatPhong === 'object' ? ptp.DatPhong._id : ptp.DatPhong;
             return customerBookingIds.includes(bookingId);
           });
 
+
           setRequests(customerUsages);
         }
+
 
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -94,12 +110,15 @@ export default function CustomerDashboard() {
       }
     };
 
+
     fetchData();
   }, [navigate]);
+
 
   const pendingBookings = bookings.filter(b => b.TrangThai === "Pending").length;
   const activeBookings = bookings.filter(b => ["DepositPaid", "Confirmed", "CheckedIn"].includes(b.TrangThai)).length;
   const pendingRequests = requests.filter(r => r.TrangThai === "Pending").length;
+
 
   const getStatusBadge = (status) => {
     const statusMap = {
@@ -116,14 +135,17 @@ export default function CustomerDashboard() {
     return <Badge variant={info.variant} className={info.className}>{info.label}</Badge>;
   };
 
+
   const formatDate = (dateString) => {
     if (!dateString) return "";
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
+
   if (loading) {
     return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
   }
+
 
   return (
     <div className="space-y-6">
@@ -135,6 +157,7 @@ export default function CustomerDashboard() {
           Chào mừng bạn đến với cổng thông tin khách hàng
         </p>
       </div>
+
 
       {/* Thống kê nhanh */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -156,6 +179,7 @@ export default function CustomerDashboard() {
           </CardContent>
         </Card>
 
+
         <Card
           className="cursor-pointer hover:shadow-lg transition-shadow"
           onClick={() => navigate("/customer/my-bookings")}
@@ -174,6 +198,7 @@ export default function CustomerDashboard() {
           </CardContent>
         </Card>
 
+
         <Card
           className="cursor-pointer hover:shadow-lg transition-shadow"
           onClick={() => navigate("/customer/services")}
@@ -190,6 +215,7 @@ export default function CustomerDashboard() {
           </CardContent>
         </Card>
 
+
         <Card
           className="cursor-pointer hover:shadow-lg transition-shadow"
           onClick={() => navigate("/customer/payment")}
@@ -204,6 +230,13 @@ export default function CustomerDashboard() {
           </CardContent>
         </Card>
       </div>
+
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Notifications />
+        <MaintenanceRequest />
+      </div>
+
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Recent Bookings */}
@@ -251,6 +284,7 @@ export default function CustomerDashboard() {
             )}
           </CardContent>
         </Card>
+
 
         {/* Recent Service Requests */}
         <Card>
@@ -302,6 +336,7 @@ export default function CustomerDashboard() {
         </Card>
       </div>
 
+
       {/* Quick Actions */}
       <Card>
         <CardHeader>
@@ -344,3 +379,6 @@ export default function CustomerDashboard() {
     </div>
   );
 }
+
+
+

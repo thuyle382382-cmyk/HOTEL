@@ -2,16 +2,20 @@ const DatPhong = require('../models/DatPhong');
 const Phong = require('../models/Phong');
 const LoaiPhong = require('../models/LoaiPhong');
 const KhachHang = require('../models/KhachHang');
+const notificationController = require('../controllers/notificationController');
+
 
 exports.findAvailableRoom = async (hangPhong, startDate, endDate, excludeBookingId = null) => {
   try {
     const loaiPhong = await LoaiPhong.findOne({ TenLoaiPhong: hangPhong });
     if (!loaiPhong) return null;
 
+
     const rooms = await Phong.find({ LoaiPhong: loaiPhong._id });
-    
+   
     const start = new Date(startDate);
     const end = new Date(endDate);
+
 
     const now = new Date();
     for (const room of rooms) {
@@ -30,12 +34,14 @@ exports.findAvailableRoom = async (hangPhong, startDate, endDate, excludeBooking
         ]
       };
 
+
       if (excludeBookingId) {
         query._id = { $ne: excludeBookingId };
       }
 
+
       const overlapping = await DatPhong.findOne(query);
-      
+     
       if (!overlapping) return room;
     }
   } catch (error) {
@@ -45,12 +51,14 @@ exports.findAvailableRoom = async (hangPhong, startDate, endDate, excludeBooking
   return null;
 };
 
+
 exports.createBooking = async (data) => {
     let { MaDatPhong, KhachHang, HangPhong, NgayDen, NgayDi, SoKhach, TienCoc, ChiTietDatPhong } = data;
-    
+   
     if (!KhachHang || !HangPhong || !NgayDen || !NgayDi || !SoKhach) {
       throw { status: 400, message: 'Missing required fields' };
     }
+
 
     // Auto-generate MaDatPhong if missing
     if (!MaDatPhong) {
@@ -65,11 +73,14 @@ exports.createBooking = async (data) => {
         MaDatPhong = `DP${String(nextId).padStart(3, '0')}`;
     }
 
+
     const start = new Date(NgayDen);
     const end = new Date(NgayDi);
     if (start >= end) throw { status: 400, message: 'Invalid dates' };
 
+
     ChiTietDatPhong = ChiTietDatPhong || [];
+
 
     // Auto-assign room if not provided
     if (ChiTietDatPhong.length === 0) {
@@ -80,12 +91,13 @@ exports.createBooking = async (data) => {
           Phong: room._id
         }];
       } else {
-        throw { 
-          status: 400, 
-          message: `Không còn phòng trống cho hạng ${HangPhong} trong khoảng thời gian này` 
+        throw {
+          status: 400,
+          message: `Không còn phòng trống cho hạng ${HangPhong} trong khoảng thời gian này`
         };
       }
     }
+
 
     const datPhong = await DatPhong.create({
       MaDatPhong,
@@ -99,33 +111,47 @@ exports.createBooking = async (data) => {
       TrangThai: 'Pending'
     });
 
+
+    // Create notification for guest
+    await notificationController.createNotification(
+      KhachHang,
+      'Đặt phòng thành công',
+      `Đơn đặt phòng ${MaDatPhong} của bạn đã được tạo. Vui lòng chờ xác nhận.`,
+      'Booking'
+    );
+
+
     return datPhong;
 };
 
+
 // Moving createWalkIn here as well for consistency, though primarily targeted at createBooking
 exports.createWalkIn = async (data) => {
-    const { 
+    const {
       // Booking info
       MaDatPhong: inputMaDP, HangPhong, NgayDen, NgayDi, SoKhach, TienCoc, ChiTietDatPhong,
       // Guest info
       HoTen, CMND, SDT, Email
     } = data;
-    
+   
     let MaDatPhong = inputMaDP;
+
 
     if (!HoTen || !CMND || !SDT || !HangPhong || !NgayDen || !NgayDi || !SoKhach) {
       throw { status: 400, message: 'Missing required fields' };
     }
 
+
     // 1. Find or Create Customer
-    let customer = await KhachHang.findOne({ 
-        $or: [{ CMND: CMND }, { Email: Email }] 
+    let customer = await KhachHang.findOne({
+        $or: [{ CMND: CMND }, { Email: Email }]
     });
+
 
     if (!customer) {
         const randomSuffix = Math.floor(1000 + Math.random() * 9000);
         const MaKH = `KH${randomSuffix}`;
-        
+       
         customer = await KhachHang.create({
             MaKH,
             HoTen,
@@ -136,10 +162,12 @@ exports.createWalkIn = async (data) => {
         });
     }
 
+
     // 2. Create Booking
     const start = new Date(NgayDen);
     const end = new Date(NgayDi);
     if (start >= end) throw { status: 400, message: 'Invalid dates' };
+
 
     let finalChiTiet = ChiTietDatPhong || [];
     if (finalChiTiet.length === 0) {
@@ -152,6 +180,7 @@ exports.createWalkIn = async (data) => {
             Phong: room._id
         }];
     }
+
 
     // Auto-generate MaDatPhong
     if (!MaDatPhong) {
@@ -166,6 +195,7 @@ exports.createWalkIn = async (data) => {
         MaDatPhong = `DP${String(nextId).padStart(3, '0')}`;
     }
 
+
     const datPhong = await DatPhong.create({
       MaDatPhong,
       KhachHang: customer._id,
@@ -178,5 +208,9 @@ exports.createWalkIn = async (data) => {
       TrangThai: 'Pending'
     });
 
+
     return datPhong;
 };
+
+
+
