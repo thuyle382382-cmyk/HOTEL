@@ -157,12 +157,13 @@ exports.createServiceUsage = async (req, res) => {
 // Update service usage
 exports.updateServiceUsage = async (req, res) => {
   try {
-    const { SoLuong, TrangThai } = req.body;
+    const { SoLuong, TrangThai, MoTa } = req.body;
 
     const updateData = {};
     if (SoLuong) updateData.SoLuong = SoLuong;
     if (TrangThai) updateData.TrangThai = TrangThai;
 
+    const oldUsage = await SuDungDichVu.findById(req.params.id);
     const usage = await SuDungDichVu.findByIdAndUpdate(
       req.params.id,
       updateData,
