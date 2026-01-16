@@ -33,6 +33,7 @@ const menuItems = [
     icon: CalendarDays,
   },
   { title: "Yêu cầu dịch vụ", url: "/customer/services", icon: ConciergeBell },
+  { title: "Hướng dẫn khu vực", url: "/customer/guide", icon: Hotel },
   { title: "Thanh toán", url: "/customer/payment", icon: CreditCard },
   { title: "Lịch sử", url: "/customer/history", icon: History },
   { title: "Thông tin cá nhân", url: "/customer/profile", icon: User },
