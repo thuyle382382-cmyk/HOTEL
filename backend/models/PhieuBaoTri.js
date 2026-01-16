@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 
 const PhieuBaoTriSchema = new mongoose.Schema({
@@ -19,13 +19,14 @@ const PhieuBaoTriSchema = new mongoose.Schema({
     },
     NoiDung: { type: String, required: true },
     NgayThucHien: { type: Date, default: Date.now },
+    NgayKetThuc: { type: Date, default: Date.now },
     TrangThai: {
-        type: String,
-        enum: ['Pending', 'InProgress', 'Completed', 'Cancelled'],
-        default: 'Pending'
-    }
-}, { timestamps: true });
+      type: String,
+      enum: ["Pending", "Completed", "Cancelled"],
+      default: "Pending",
+    },
+  },
+  { timestamps: true }
+);
 
-
-module.exports = mongoose.model('PhieuBaoTri', PhieuBaoTriSchema);
-
+module.exports = mongoose.model("PhieuBaoTri", PhieuBaoTriSchema);

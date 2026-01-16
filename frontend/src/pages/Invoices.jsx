@@ -28,10 +28,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Download, Eye, DollarSign, Loader2 } from "lucide-react";
-import { invoiceApi, bookingApi, customerApi, rentalReceiptApi, paymentMethodApi } from "@/api";
+import {
+  invoiceApi,
+  bookingApi,
+  customerApi,
+  rentalReceiptApi,
+  paymentMethodApi,
+} from "@/api";
 
 export default function Invoices() {
-
   const loadCustomers = async () => {
     try {
       const data = await customerApi.getCustomers();
@@ -129,7 +134,9 @@ export default function Invoices() {
     // Clean up payload: remove NhanVienThuNgan and empty strings
     const { NhanVienThuNgan, ...rest } = formData;
     const cleanData = Object.fromEntries(
-      Object.entries(rest).filter(([_, v]) => v !== "" && v !== null && v !== undefined)
+      Object.entries(rest).filter(
+        ([_, v]) => v !== "" && v !== null && v !== undefined
+      )
     );
 
     const payload = {
@@ -140,7 +147,7 @@ export default function Invoices() {
       TienBoiThuong: Number(formData.TienBoiThuong) || 0,
       TienDaCoc: Number(formData.TienDaCoc) || 0,
     };
-    
+
     // Ensure display-only field is not sent
     delete payload.HoTenKhachHang;
 
@@ -448,7 +455,8 @@ export default function Invoices() {
                 <SelectContent>
                   {rentalReceipts.map((r) => (
                     <SelectItem key={r._id} value={r._id}>
-                      {r.MaPTP} - Phòng {r.Phong?.SoPhong || r.Phong?.MaPhong || "N/A"}
+                      {r.MaPTP} - Phòng{" "}
+                      {r.Phong?.SoPhong || r.Phong?.MaPhong || "N/A"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -458,7 +466,11 @@ export default function Invoices() {
             {formData.HoTenKhachHang && (
               <div className="grid gap-2">
                 <Label>Khách hàng (Tự động)</Label>
-                <Input value={formData.HoTenKhachHang} readOnly className="bg-muted" />
+                <Input
+                  value={formData.HoTenKhachHang}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
             )}
 
@@ -471,7 +483,6 @@ export default function Invoices() {
                 readOnly
                 className="bg-muted cursor-not-allowed"
               />
-
             </div>
             <div className="grid gap-2">
               <Label htmlFor="serviceTotal">Tổng tiền dịch vụ (VNĐ)</Label>
@@ -536,7 +547,7 @@ export default function Invoices() {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="paymentStatus">Trạng thái thanh toán</Label>
+              {/* <Label htmlFor="paymentStatus">Trạng thái thanh toán</Label>
               <Select
                 value={formData.TrangThaiThanhToan}
                 onValueChange={(value) =>
@@ -553,7 +564,7 @@ export default function Invoices() {
                   </SelectItem>
                   <SelectItem value="Paid">Đã thanh toán</SelectItem>
                 </SelectContent>
-              </Select>
+              </Select> */}
             </div>
             <div className="border-t pt-4 mt-2">
               <div className="flex justify-between items-center text-lg font-bold">
@@ -568,7 +579,10 @@ export default function Invoices() {
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
               Hủy
             </Button>
-            <Button onClick={handleCreateInvoice} disabled={!formData.PhieuThuePhong}>
+            <Button
+              onClick={handleCreateInvoice}
+              disabled={!formData.PhieuThuePhong}
+            >
               Tạo hóa đơn
             </Button>
           </DialogFooter>

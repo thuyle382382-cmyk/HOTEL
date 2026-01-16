@@ -26,6 +26,7 @@ const roomTypeRoutes = require('./routes/roomTypeRoutes');
 const settingRoutes = require('./routes/settingRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 
+const stripeRoutes = require('./routes/stripeRoutes');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -88,6 +89,7 @@ app.use('/api/room-types', authMiddleware, roomTypeRoutes);
 app.use('/api/settings', authMiddleware, settingRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+app.use('/api/stripe', stripeRoutes);
 
 // Health route
 app.get('/api/health', (req, res) => res.json({ ok: true }));

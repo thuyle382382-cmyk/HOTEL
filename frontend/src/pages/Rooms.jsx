@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/autoplay";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +31,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Edit, Eye, MoreVertical, Search, Filter, Loader2, Wrench } from "lucide-react";
+import {
+  Edit,
+  Eye,
+  MoreVertical,
+  Search,
+  Filter,
+  Loader2,
+  Wrench,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +48,14 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
-import { roomApi, roomTypeApi, settingApi, maintenanceApi, staffApi } from "@/api";
+import {
+  roomApi,
+  roomTypeApi,
+  settingApi,
+  maintenanceApi,
+  staffApi,
+} from "@/api";
+import { se } from "date-fns/locale";
 
 // Room category definitions
 // Initial room categories (fallback)
@@ -86,9 +105,9 @@ export default function Rooms() {
     TrangThai: "Available",
   });
   const [maintenanceData, setMaintenanceData] = useState({
-     MaPBT: "",
-     NVKyThuat: "",
-     NoiDung: ""
+    MaPBT: "",
+    NVKyThuat: "",
+    NoiDung: "",
   });
 
   useEffect(() => {
@@ -101,57 +120,90 @@ export default function Rooms() {
     try {
       const res = await staffApi.getStaff();
       setTechStaff(Array.isArray(res) ? res : res.data || []);
-    } catch (err) { console.error("Error loading staff:", err); }
-  }
+    } catch (err) {
+      console.error("Error loading staff:", err);
+    }
+  };
 
   const handleOpenMaintenance = async (room) => {
-      setSelectedRoom(room);
-      setMaintenanceData({
-          MaPBT: "",
-          NVKyThuat: "",
-          NoiDung: ""
-      });
-      setIsMaintenanceOpen(true);
-      try {
-          const nextCode = await maintenanceApi.getNextMaPBTCode();
-          setMaintenanceData(prev => ({ ...prev, MaPBT: nextCode }));
-      } catch (err) {
-          console.error("Error fetching next MaPBT:", err);
-      }
-  }
+    setSelectedRoom(room);
+    setMaintenanceData({
+      MaPBT: "",
+      NVKyThuat: "",
+      NoiDung: "",
+    });
+    setIsMaintenanceOpen(true);
+    try {
+      const nextCode = await maintenanceApi.getNextMaPBTCode();
+      setMaintenanceData((prev) => ({ ...prev, MaPBT: nextCode }));
+    } catch (err) {
+      console.error("Error fetching next MaPBT:", err);
+    }
+  };
 
   const handleSaveMaintenance = async () => {
-      if (!maintenanceData.NVKyThuat || !maintenanceData.NoiDung) {
-          toast({ title: "Thông tin không đủ", description: "Vui lòng chọn nhân viên và nhập nội dung", variant: "destructive" });
-          return;
-      }
-      try {
-          await maintenanceApi.createMaintenanceRecord({
-              ...maintenanceData,
-              Phong: selectedRoom._id
-          });
-          toast({ title: "Đã tạo phiếu bảo trì", description: `Phòng ${selectedRoom.MaPhong} đang ở trạng thái Bảo trì` });
-          setIsMaintenanceOpen(false);
-          loadRooms();
-      } catch (err) {
-          toast({ title: "Lỗi", description: err.message, variant: "destructive" });
-      }
-  }
+    if (!maintenanceData.NVKyThuat || !maintenanceData.NoiDung) {
+      toast({
+        title: "Thông tin không đủ",
+        description: "Vui lòng chọn nhân viên và nhập nội dung",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      await maintenanceApi.createMaintenanceRecord({
+        ...maintenanceData,
+        Phong: selectedRoom._id,
+      });
+      toast({
+        title: "Đã tạo phiếu bảo trì",
+        description: `Phòng ${selectedRoom.MaPhong} đang ở trạng thái Bảo trì`,
+      });
+      setIsMaintenanceOpen(false);
+      loadRooms();
+    } catch (err) {
+      toast({ title: "Lỗi", description: err.message, variant: "destructive" });
+    }
+  };
+  function Slider(images) {
+    const [index, setIndex] = useState(0);
 
+    useEffect(() => {
+      const timer = setInterval(() => {
+        setIndex((prev) => (prev + 1) % images.length);
+      }, 3000); // 3s
+
+      return () => clearInterval(timer);
+    }, []);
+
+    return (
+      <div className="slider">
+        <img src={images[index]} alt="slide" />
+      </div>
+    );
+  }
   const fetchSettings = async () => {
     try {
       const res = await settingApi.getSettings();
       if (res && res.data && res.data.GiaPhongCoBan) {
-         const prices = res.data.GiaPhongCoBan;
-         setRoomCategories(prev => ({
-           ...prev,
-           Normal: { ...prev.Normal, price: prices.Normal || prev.Normal.price },
-           Standard: { ...prev.Standard, price: prices.Standard || prev.Standard.price },
-           Premium: { ...prev.Premium, price: prices.Premium || prev.Premium.price },
-           Luxury: { ...prev.Luxury, price: prices.Luxury || prev.Luxury.price },
-         }));
+        const prices = res.data.GiaPhongCoBan;
+        setRoomCategories((prev) => ({
+          ...prev,
+          Normal: { ...prev.Normal, price: prices.Normal || prev.Normal.price },
+          Standard: {
+            ...prev.Standard,
+            price: prices.Standard || prev.Standard.price,
+          },
+          Premium: {
+            ...prev.Premium,
+            price: prices.Premium || prev.Premium.price,
+          },
+          Luxury: { ...prev.Luxury, price: prices.Luxury || prev.Luxury.price },
+        }));
       }
-    } catch(err) { console.error("Could not load settings in Rooms:", err); }
+    } catch (err) {
+      console.error("Could not load settings in Rooms:", err);
+    }
   };
 
   const loadRooms = async () => {
@@ -336,6 +388,10 @@ export default function Rooms() {
         label: "Bảo trì",
         className: "bg-destructive text-destructive-foreground",
       },
+      Reserved: {
+        label: "Đã đặt",
+        className: "bg-warning text-warning-foreground",
+      },
     };
     const config = statusConfig[status] || {
       label: status,
@@ -347,7 +403,9 @@ export default function Rooms() {
   const filteredRooms = rooms.filter((room) => {
     const matchesSearch =
       room.LoaiPhong?.TenLoaiPhong &&
-      room.LoaiPhong.TenLoaiPhong.toLowerCase().includes(searchTerm.toLowerCase());
+      room.LoaiPhong.TenLoaiPhong.toLowerCase().includes(
+        searchTerm.toLowerCase()
+      );
     const matchesStatus =
       filterStatus === "all" || room.TrangThai === filterStatus;
     return matchesSearch && matchesStatus;
@@ -388,6 +446,18 @@ export default function Rooms() {
           <CardContent>
             <div className="text-2xl font-bold">
               {rooms.filter((r) => r.TrangThai === "Available").length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Đã đặt
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {rooms.filter((r) => r.TrangThai === "Reserved").length}
             </div>
           </CardContent>
         </Card>
@@ -443,6 +513,7 @@ export default function Rooms() {
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="Available">Trống</SelectItem>
+                <SelectItem value="Reserved">Đã đặt</SelectItem>
                 <SelectItem value="Occupied">Đang sử dụng</SelectItem>
                 <SelectItem value="Maintenance">Bảo trì</SelectItem>
               </SelectContent>
@@ -506,7 +577,7 @@ export default function Rooms() {
                             <Wrench className="mr-2 h-4 w-4" />
                             Bảo trì
                           </DropdownMenuItem>
-                          
+
                           {(userRole === "Admin" || userRole === "Manager") && (
                             <>
                               <DropdownMenuSeparator />
@@ -600,6 +671,7 @@ export default function Rooms() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Available">Trống</SelectItem>
+                  <SelectItem value="Reserved">Đã đặt</SelectItem>
                   <SelectItem value="Occupied">Đang sử dụng</SelectItem>
                   <SelectItem value="Maintenance">Bảo trì</SelectItem>
                 </SelectContent>
@@ -651,6 +723,35 @@ export default function Rooms() {
                     {getStatusBadge(selectedRoom.TrangThai)}
                   </div>
                 </div>
+              </div>
+              <div className="h-[300px] w-full rounded-lg overflow-hidden border border-border shadow-sm">
+                <Swiper
+                  modules={[Autoplay]}
+                  autoplay={{ delay: 1567, disableOnInteraction: false }}
+                  loop
+                  className="h-full w-full"
+                >
+                  {selectedRoom.img && selectedRoom.img.length > 0 ? (
+                    selectedRoom.img.map((img, idx) => (
+                      <SwiperSlide
+                        key={idx}
+                        className="flex items-center justify-center bg-muted"
+                      >
+                        <img
+                          src={img}
+                          alt={`Phòng ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </SwiperSlide>
+                    ))
+                  ) : (
+                    <SwiperSlide className="flex items-center justify-center bg-muted">
+                      <span className="text-muted-foreground">
+                        Không có hình ảnh
+                      </span>
+                    </SwiperSlide>
+                  )}
+                </Swiper>
               </div>
             </div>
           )}
@@ -732,6 +833,7 @@ export default function Rooms() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Available">Trống</SelectItem>
+                    <SelectItem value="Reserved">Đã đặt</SelectItem>
                     <SelectItem value="Occupied">Đang sử dụng</SelectItem>
                     <SelectItem value="Maintenance">Bảo trì</SelectItem>
                   </SelectContent>
@@ -768,6 +870,7 @@ export default function Rooms() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Available">Trống</SelectItem>
+                    <SelectItem value="Reserved">Đã đặt</SelectItem>
                     <SelectItem value="Occupied">Đang sử dụng</SelectItem>
                     <SelectItem value="Maintenance">Bảo trì</SelectItem>
                   </SelectContent>
@@ -796,33 +899,69 @@ export default function Rooms() {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right">Phòng</Label>
-                <div className="col-span-3 font-semibold">{selectedRoom.MaPhong}</div>
+                <div className="col-span-3 font-semibold">
+                  {selectedRoom.MaPhong}
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="maint-code" className="text-right">Mã phiếu</Label>
-                <Input id="maint-code" value={maintenanceData.MaPBT} readOnly className="col-span-3 bg-muted" />
+                <Label htmlFor="maint-code" className="text-right">
+                  Mã phiếu
+                </Label>
+                <Input
+                  id="maint-code"
+                  value={maintenanceData.MaPBT}
+                  readOnly
+                  className="col-span-3 bg-muted"
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="maint-staff" className="text-right">Kỹ thuật</Label>
-                <Select value={maintenanceData.NVKyThuat} onValueChange={(v) => setMaintenanceData({...maintenanceData, NVKyThuat: v})}>
-                    <SelectTrigger id="maint-staff" className="col-span-3">
-                        <SelectValue placeholder="Chọn nhân viên" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {techStaff.map(s => (
-                            <SelectItem key={s._id} value={s._id}>{s.HoTen}</SelectItem>
-                        ))}
-                    </SelectContent>
+                <Label htmlFor="maint-staff" className="text-right">
+                  Kỹ thuật
+                </Label>
+                <Select
+                  value={maintenanceData.NVKyThuat}
+                  onValueChange={(v) =>
+                    setMaintenanceData({ ...maintenanceData, NVKyThuat: v })
+                  }
+                >
+                  <SelectTrigger id="maint-staff" className="col-span-3">
+                    <SelectValue placeholder="Chọn nhân viên" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {techStaff.map((s) => (
+                      <SelectItem key={s._id} value={s._id}>
+                        {s.HoTen}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="maint-content" className="text-right">Nội dung</Label>
-                <Textarea id="maint-content" value={maintenanceData.NoiDung} onChange={(e) => setMaintenanceData({...maintenanceData, NoiDung: e.target.value})} className="col-span-3" placeholder="Chi tiết sự cố..." />
+                <Label htmlFor="maint-content" className="text-right">
+                  Nội dung
+                </Label>
+                <Textarea
+                  id="maint-content"
+                  value={maintenanceData.NoiDung}
+                  onChange={(e) =>
+                    setMaintenanceData({
+                      ...maintenanceData,
+                      NoiDung: e.target.value,
+                    })
+                  }
+                  className="col-span-3"
+                  placeholder="Chi tiết sự cố..."
+                />
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsMaintenanceOpen(false)}>Hủy</Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsMaintenanceOpen(false)}
+            >
+              Hủy
+            </Button>
             <Button onClick={handleSaveMaintenance}>Xác nhận bảo trì</Button>
           </DialogFooter>
         </DialogContent>

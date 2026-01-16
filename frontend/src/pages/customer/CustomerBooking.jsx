@@ -21,8 +21,11 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { roomApi, datPhongApi, customerApi, settingApi } from "@/api";
-
+import { roomApi, datPhongApi, customerApi, settingApi, stripeApi } from "@/api";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/autoplay";
 // Helper to decode JWT
 const parseJwt = (token) => {
   try {
@@ -74,28 +77,47 @@ export default function CustomerBooking() {
   const [isBooking, setIsBooking] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState(null);
   const [roomTypeInfo, setRoomTypeInfo] = useState(initialRoomTypeInfo);
-
+  const images = [
+    "https://cf.bstatic.com/xdata/images/hotel/max1024x768/163589466.jpg?k=f6595e4f13c2a5f394598a838f3d92191e96af6098975642694351457f9669d4&o=",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQB8ZYR72k8mzPijKS_-zvr7CWqkOwMlHmEaQ&s",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJtm1ldS2O3BnVzHowHZH4fBPUGhk_RTxSdQ&s",
+  ];
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-         // 0. Fetch Settings for dynamic prices
-         try {
-           const settingsRes = await settingApi.getSettings();
-           if (settingsRes?.data?.GiaPhongCoBan) {
-             const prices = settingsRes.data.GiaPhongCoBan;
-             setRoomTypeInfo(prev => ({
-               ...prev,
-               Normal: { ...prev.Normal, price: prices.Normal || prev.Normal.price },
-               Standard: { ...prev.Standard, price: prices.Standard || prev.Standard.price },
-               Premium: { ...prev.Premium, price: prices.Premium || prev.Premium.price },
-               Luxury: { ...prev.Luxury, price: prices.Luxury || prev.Luxury.price },
-             }));
-           }
-         } catch (settingsErr) {
-           console.warn("Could not fetch settings for room prices, using defaults", settingsErr);
-         }
+        // 0. Fetch Settings for dynamic prices
+        try {
+          const settingsRes = await settingApi.getSettings();
+          if (settingsRes?.data?.GiaPhongCoBan) {
+            const prices = settingsRes.data.GiaPhongCoBan;
+            setRoomTypeInfo((prev) => ({
+              ...prev,
+              Normal: {
+                ...prev.Normal,
+                price: prices.Normal || prev.Normal.price,
+              },
+              Standard: {
+                ...prev.Standard,
+                price: prices.Standard || prev.Standard.price,
+              },
+              Premium: {
+                ...prev.Premium,
+                price: prices.Premium || prev.Premium.price,
+              },
+              Luxury: {
+                ...prev.Luxury,
+                price: prices.Luxury || prev.Luxury.price,
+              },
+            }));
+          }
+        } catch (settingsErr) {
+          console.warn(
+            "Could not fetch settings for room prices, using defaults",
+            settingsErr
+          );
+        }
 
         // 1. Fetch Rooms
         const roomsData = await roomApi.getRooms();
@@ -140,7 +162,7 @@ export default function CustomerBooking() {
   // Filter Logic
   const getAvailableRooms = () => {
     // 1. Filter by Status (Static)
-    // Rooms must be 'available' (meaning clean/ready in general)
+    // Rooms must be 'Available' (not Reserved, Occupied, or Maintenance)
     let candidates = rooms.filter(
       (r) => r.status === "available" || r.TrangThai === "Available"
     );
@@ -148,22 +170,20 @@ export default function CustomerBooking() {
     // 2. Filter by Type (Strict match first, then keywords)
     if (selectedRoomType) {
       candidates = candidates.filter((r) => {
-        const roomTypeName = (
-          r.LoaiPhong?.TenLoaiPhong ||
-          r.LoaiPhong ||
-          r.type ||
-          ""
-        );
-        
+        const roomTypeName =
+          r.LoaiPhong?.TenLoaiPhong || r.LoaiPhong || r.type || "";
+
         // Strict match against category name
         if (roomTypeName === selectedRoomType) return true;
-        
+
         // Fallback to keywords
         const typeConfig = roomTypeInfo[selectedRoomType];
         const keywords = typeConfig
           ? typeConfig.searchKeywords
           : [selectedRoomType.toLowerCase()];
-        return keywords.some((k) => roomTypeName.toLowerCase().includes(k.toLowerCase()));
+        return keywords.some((k) =>
+          roomTypeName.toLowerCase().includes(k.toLowerCase())
+        );
       });
     }
 
@@ -178,9 +198,13 @@ export default function CustomerBooking() {
       allBookings.forEach((b) => {
         // Only care about active bookings
         if (
-          ["Cancelled", "NoShow", "CheckedOut", "Completed", "Pending"].includes(
-            b.TrangThai
-          )
+          [
+            "Cancelled",
+            "NoShow",
+            "CheckedOut",
+            "Completed",
+            "Pending",
+          ].includes(b.TrangThai)
         )
           return;
 
@@ -310,38 +334,31 @@ export default function CustomerBooking() {
       NgayDi: checkOutDate,
       SoKhach: parseInt(numberOfGuests),
       TienCoc: depositAmount,
-      // Pass the specific room selected by the filter if available, 
+      // Pass the specific room selected by the filter if available,
       // otherwise let backend auto-assign (though frontend validates availableRooms.length > 0)
-      ChiTietDatPhong: selectedRoom ? [
-        { MaCTDP: `CTDP${timestamp}`, Phong: selectedRoom._id },
-      ] : [],
+      ChiTietDatPhong: selectedRoom
+        ? [{ MaCTDP: `CTDP${timestamp}`, Phong: selectedRoom._id }]
+        : [],
     };
 
     try {
       setIsBooking(true);
-      await datPhongApi.createBooking(payload);
-      toast({
-        title: "Thành công!",
-        description: "Đã tạo đặt phòng.",
-        className: "bg-green-100 text-green-900",
-      });
-
-      // Refresh bookings to keep local state in sync
-      const bookingsRes = await datPhongApi.getBookings();
-      setAllBookings(bookingsRes.data || bookingsRes || []);
-
-      setConfirmDialogOpen(false);
-      setStep(1);
-      setSelectedRoomType("");
-      setCheckInDate("");
-      setCheckOutDate("");
+      
+      // Create booking with Pending status and get Stripe checkout URL
+      const { url } = await stripeApi.createCheckoutSession(payload);
+      
+      // Redirect to Stripe checkout page
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error("Không thể tạo phiên thanh toán");
+      }
     } catch (error) {
       toast({
         title: "Thất bại",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
       setIsBooking(false);
     }
   };
@@ -391,6 +408,35 @@ export default function CustomerBooking() {
                     <CardDescription>{info.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
+                    <div className="h-[300px] w-full rounded-lg overflow-hidden border border-border shadow-sm">
+                      <Swiper
+                        modules={[Autoplay]}
+                        autoplay={{ delay: 1567, disableOnInteraction: false }}
+                        loop
+                        className="h-full w-full"
+                      >
+                        {rooms[0].img && rooms[0].img.length > 0 ? (
+                          rooms[0].img.map((img, idx) => (
+                            <SwiperSlide
+                              key={idx}
+                              className="flex items-center justify-center bg-muted"
+                            >
+                              <img
+                                src={img}
+                                alt={`Phòng ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </SwiperSlide>
+                          ))
+                        ) : (
+                          <SwiperSlide className="flex items-center justify-center bg-muted">
+                            <span className="text-muted-foreground">
+                              Không có hình ảnh
+                            </span>
+                          </SwiperSlide>
+                        )}
+                      </Swiper>
+                    </div>
                     <div className="font-bold text-lg text-primary">
                       {info.price.toLocaleString()} VNĐ
                     </div>
@@ -492,7 +538,7 @@ export default function CustomerBooking() {
               <Button onClick={handleNext}>Tiếp tục</Button>
             ) : (
               <Button onClick={() => setConfirmDialogOpen(true)}>
-                Xác nhận
+                Thanh toán cọc & Đặt phòng
               </Button>
             )}
           </div>
