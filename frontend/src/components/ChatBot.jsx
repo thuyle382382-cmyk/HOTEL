@@ -42,6 +42,7 @@ const ChatBot = () => {
       msg.includes("được") ||
       msg.includes("biết") ||
       msg.includes("chi tiết") ||
+      msg.includes("xem") ||
       msg.includes("yes") ||
       msg.includes("yep") ||
       msg.includes("ok") ||
@@ -50,8 +51,8 @@ const ChatBot = () => {
       msg.includes("có") ||
       msg.includes("tốt") ||
       msg.match(/^(vâng|được|ok|tốt|okela)$/i) ||
-      msg.match(/^(được|muốn).*(biết|chi tiết|thêm|tìm hiểu)/) ||
-      msg.match(/(biết|tìm hiểu|chi tiết).*(thêm|được)/)
+      msg.match(/^(được|muốn|cho).*(biết|chi tiết|thêm|tìm hiểu|xem)/) ||
+      msg.match(/(biết|tìm hiểu|chi tiết|xem).*(thêm|được|cho)/)
     );
   };
 
@@ -91,7 +92,60 @@ const ChatBot = () => {
     const message = userMessage.toLowerCase().trim();
     const lastTopic = getLastBotTopic();
 
-    // Check for specific service mentions FIRST (handles follow-ups to service_info)
+    // PRIORITY: If user is asking for more details and bot just asked about a topic
+    // This should be checked BEFORE specific service mentions
+    if (isAffirmativeResponse(message) || message.includes("chi tiết") || message.includes("xem")) {
+      if (lastTopic === "room_info") {
+        return {
+          text: getRoomDetailsResponse(),
+          topic: "room_details"
+        };
+      }
+      if (lastTopic === "service_info") {
+        return {
+          text: getServiceDetailsResponse(),
+          topic: "service_details"
+        };
+      }
+      if (lastTopic === "booking_info") {
+        return {
+          text: getBookingDetailsResponse(),
+          topic: "booking_details"
+        };
+      }
+      if (lastTopic === "payment_info") {
+        return {
+          text: getPaymentDetailsResponse(),
+          topic: "payment_details"
+        };
+      }
+      if (lastTopic === "maintenance_info") {
+        return {
+          text: getMaintenanceDetailsResponse(),
+          topic: "maintenance_details"
+        };
+      }
+      if (lastTopic === "contact_info") {
+        return {
+          text: getContactDetailsResponse(),
+          topic: "contact_details"
+        };
+      }
+      if (lastTopic === "cancellation_info") {
+        return {
+          text: getCancellationDetailsResponse(),
+          topic: "cancellation_details"
+        };
+      }
+      if (lastTopic === "checkin_info") {
+        return {
+          text: getCheckInDetailsResponse(),
+          topic: "checkin_details"
+        };
+      }
+    }
+
+    // Check for specific service mentions (handles follow-ups to service_info)
     if (
       message.includes("wifi") ||
       message.includes("wi-fi") ||
@@ -152,58 +206,6 @@ const ChatBot = () => {
         text: "Thông tin về Dịch vụ Taxi/Đưa Đón:\n\n🚕 **Đưa Đón**\n• Bảo hành: Sạch sẽ, an toàn\n• Lái xe chuyên nghiệp\n• Điều hòa mát mẻ\n• Thẻ SIM để liên lạc\n\n💰 **Giá cước**\n• Sân bay (20 km): 200,000đ\n• Thành phố: Theo taxi meter\n• Ngoài giờ (+19:00): +10%\n• Chờ xe: 50,000đ/giờ\n\n🚖 **Loại xe**\n• Sedan (1-3 khách): 200,000đ\n• 7 chỗ (4-7 khách): 300,000đ\n• Xe cao cấp: +100,000đ\n\n📍 **Địa điểm phổ biến**\n• Sân bay Tân Sơn Nhất: 200,000đ\n• Bến Thành: 150,000đ\n• Bitexco: 180,000đ\n\n🔔 **Đặt xe**\n• Gọi lễ tân (Phím 0)\n• Nói rõ: Điểm đi, điểm đến, giờ\n• Xe sẵn sàng trong 10 phút\n\nBạn cần gọi taxi không?",
         topic: "taxi_details"
       };
-    }
-
-    // If user is asking for more details and bot just asked about a topic
-    if (isAffirmativeResponse(message)) {
-      if (lastTopic === "room_info") {
-        return {
-          text: "Dưới đây là chi tiết về các loại phòng:\n\n🛏️ **Phòng Đơn (Single)**\n• Diện tích: 25m²\n• Giường đơn\n• Giá: 500,000đ/đêm\n\n🛏️ **Phòng Đôi (Double)**\n• Diện tích: 35m²\n• Giường đôi\n• Giá: 800,000đ/đêm\n\n👨‍👩‍👧‍👦 **Phòng Gia Đình (Family)**\n• Diện tích: 50m²\n• 2 giường đôi + 1 giường đơn\n• Giá: 1,200,000đ/đêm\n\n✨ **Phòng Suite**\n• Diện tích: 65m²\n• Khu vực khách + phòng ngủ\n• Giá: 1,800,000đ/đêm\n\nTất cả phòng có: WiFi, TV, AC, Tủ lạnh, Phòng tắm hiện đại.\n\nBạn có muốn đặt phòng nào không?",
-          topic: "room_details"
-        };
-      }
-      if (lastTopic === "service_info") {
-        return {
-          text: "Chi tiết các dịch vụ:\n\n🧹 **Dọn phòng hàng ngày** - Miễn phí\n\n🍽️ **Dịch vụ phòng ăn** - 24/7\n• Thực đơn đa dạng\n• Giao phòng nhanh\n\n👕 **Giặt ủi**\n• Giặt khô: 50,000đ/kg\n• Ủi: 30,000đ/kg\n\n🚕 **Taxi/Đưa đón**\n• Sân bay: 200,000đ\n• Thành phố: Giá cước\n\n📶 **WiFi** - Miễn phí (100Mbps)\n\nBạn cần dịch vụ nào?",
-          topic: "service_details"
-        };
-      }
-      if (lastTopic === "booking_info") {
-        return {
-          text: "Quy trình đặt phòng chi tiết:\n\n📝 **Bước 1: Chọn ngày**\n• Chọn ngày check-in\n• Chọn ngày check-out\n• Số đêm sẽ tự tính\n\n🛏️ **Bước 2: Chọn phòng**\n• Xem danh sách phòng trống\n• Xem hình ảnh phòng\n• Chọn loại phòng phù hợp\n\n👤 **Bước 3: Thông tin khách**\n• Họ tên đầy đủ\n• Số điện thoại\n• Email\n• Quốc tịch\n\n💳 **Bước 4: Thanh toán**\n• Thẻ tín dụng\n• Chuyển khoản\n• Thanh toán tại quầy\n\nBạn muốn bắt đầu đặt phòng không?",
-          topic: "booking_details"
-        };
-      }
-      if (lastTopic === "payment_info") {
-        return {
-          text: "Chi tiết về thanh toán:\n\n💳 **Phương thức thanh toán**\n• Thẻ tín dụng (VISA, Mastercard)\n• Thẻ ghi nợ\n• Chuyển khoản ngân hàng\n• Ví điện tử (Momo, Zalo Pay)\n• Tiền mặt tại quầy\n\n📄 **Hóa đơn**\n• Cấp hóa đơn chi tiết\n• Ghi rõ từng dịch vụ\n• Gửi qua email\n\n💰 **Chính sách giá**\n• Không phí ẩn\n• Giá hiển thị bao gồm thuế\n• Hỗ trợ giảm giá theo nhóm\n\nCó thêm câu hỏi về thanh toán không?",
-          topic: "payment_details"
-        };
-      }
-      if (lastTopic === "maintenance_info") {
-        return {
-          text: "Hỗ trợ bảo trì & sửa chữa:\n\n🔧 **Các vấn đề thường gặp**\n• Điều hòa không lạnh\n• Nước nóng không có\n• Đèn bị hỏng\n• Phụ kiện vỡ\n\n📞 **Cách yêu cầu**\n• Gọi lễ tân: Phím 0\n• Gửi yêu cầu qua ứng dụng\n• Gọi: 0123-456-789\n\n⏱️ **Thời gian xử lý**\n• Sự cố khẩn cấp: 10 phút\n• Bảo trì thông thường: 15 phút\n• Yêu cầu đặc biệt: 1 giờ\n\n✅ **Đảm bảo**\n• Miễn phí sửa chữa do khách sạn\n• Xử lý hỏng hóc do khách: Chi phí thực tế\n\nBạn gặp vấn đề gì không?",
-          topic: "maintenance_details"
-        };
-      }
-      if (lastTopic === "contact_info") {
-        return {
-          text: "Thông tin liên hệ & địa chỉ:\n\n📍 **Địa chỉ**\n123 Đường ABC, Thành phố\nViệt Nam\n\n📞 **Điện thoại**\n• Lễ tân: +84-123-456-789\n• Phòng: Phím 0\n• Emergency: +84-987-654-321\n\n📧 **Email**\n• Thông tin: info@hotelkhoi.vn\n• Đặt phòng: booking@hotelkhoi.vn\n• Hỗ trợ: support@hotelkhoi.vn\n\n🌐 **Website**\nwww.hotelkhoi.vn\n\n⏰ **Giờ làm việc**\n• Lễ tân: 24/7\n• Hành chính: 8:00 - 17:00\n\nGọi cho chúng tôi bất kỳ lúc nào!",
-          topic: "contact_details"
-        };
-      }
-      if (lastTopic === "cancellation_info") {
-        return {
-          text: "Chính sách hủy phòng chi tiết:\n\n🔄 **Điều khoản hủy**\n• Hủy 7+ ngày trước: Hoàn 100%\n• Hủy 4-7 ngày: Hoàn 50%\n• Hủy 1-3 ngày: Hoàn 0%\n• Hủy ngày check-in: Mất 1 đêm\n\n⏱️ **Thời gian xử lý**\n• Hoàn tiền: 3-5 ngày làm việc\n• Thẻ tín dụng: Lâu hơn\n\n💡 **Lưu ý**\n• Kiểm tra email xác nhận\n• Lưu mã đặt phòng\n• Liên hệ lễ tân nếu cần thay đổi\n\n❓ **Trường hợp đặc biệt**\n• Tình huống khẩn cấp: Hoàn 100%\n• Thay đổi ngày: Không phí\n• Nâng cấp phòng: Hoàn lệnh phí\n\nBạn có muốn hủy đặt phòng không?",
-          topic: "cancellation_details"
-        };
-      }
-      if (lastTopic === "checkin_info") {
-        return {
-          text: "Thông tin Check-in/Check-out:\n\n🔐 **Check-in**\n• Thời gian: 14:00\n• Địa điểm: Lễ tân tầng 1\n• Cần CCCD/Hộ chiếu\n• Nhân phòng phòng thẻ\n\n🔑 **Check-out**\n• Thời gian: 11:00\n• Trả chìa khóa tại lễ tân\n• Thanh toán phát sinh (nếu có)\n• Kiểm tra đồ vật cá nhân\n\n⏰ **Giờ muộn (Late Check-out)**\n• 11:00-13:00: +50,000đ\n• 13:00-17:00: +100,000đ\n• Tùy có sẵn phòng\n• Đặt trước 09:00\n\n🧳 **Giữ hành lý**\n• Miễn phí trong 7 ngày\n• Phải trả trước khi rời đi\n• Bảo quản trong kho an toàn\n\nBạn có câu hỏi gì không?",
-          topic: "checkin_details"
-        };
-      }
     }
 
     // Room Information
