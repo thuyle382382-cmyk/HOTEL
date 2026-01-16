@@ -25,6 +25,7 @@ const datPhongRoutes = require('./routes/datPhongRoutes');
 const roomTypeRoutes = require('./routes/roomTypeRoutes');
 const settingRoutes = require('./routes/settingRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const roomExtensionRoutes = require('./routes/roomExtensionRoutes');
 
 const stripeRoutes = require('./routes/stripeRoutes');
 
@@ -48,6 +49,7 @@ const SuDungDichVu = require('./models/SuDungDichVu');
 const LichSuDatPhong = require('./models/LichSuDatPhong');
 const LichSuSuDungDichVu = require('./models/LichSuSuDungDichVu');
 const PhieuBaoTri = require('./models/PhieuBaoTri');
+const PhieuGiaHan = require('./models/PhieuGiaHan');
 
 
 const app = express();
@@ -88,6 +90,7 @@ app.use('/api/dat-phong', authMiddleware, datPhongRoutes);
 app.use('/api/room-types', authMiddleware, roomTypeRoutes);
 app.use('/api/settings', authMiddleware, settingRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/room-extensions', authMiddleware, roomExtensionRoutes);
 
 app.use('/api/stripe', stripeRoutes);
 
